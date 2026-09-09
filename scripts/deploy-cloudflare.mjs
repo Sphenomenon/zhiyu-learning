@@ -25,7 +25,8 @@ export function deploymentConfig(environment) {
     vars.WECHAT_SERVER_URL = callback.href
   }
   return {
-    name: projectName, account_id: account, pages_build_output_dir: './dist', compatibility_date: '2026-09-09',
+    // Pages reads the account from CLOUDFLARE_ACCOUNT_ID, not its config file.
+    name: projectName, pages_build_output_dir: './dist', compatibility_date: '2026-09-09',
     compatibility_flags: ['nodejs_compat'],
     // AppSecret is a separate encrypted Pages secret, never a plaintext var.
     vars,
@@ -61,7 +62,7 @@ async function deploy() {
   if (!process.env.CLOUDFLARE_API_TOKEN) throw new Error('Missing GitHub Actions secret CLOUDFLARE_API_TOKEN.')
   const config = deploymentConfig(process.env)
   const cloudflare = async path => {
-    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${config.account_id}${path}`, { headers: { Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}` }, signal: AbortSignal.timeout(30_000) })
+    const response = await fetch(`https://api.cloudflare.com/client/v4/accounts/${process.env.CLOUDFLARE_ACCOUNT_ID}${path}`, { headers: { Authorization: `Bearer ${process.env.CLOUDFLARE_API_TOKEN}` }, signal: AbortSignal.timeout(30_000) })
     const data = await response.json()
     if (!response.ok || !data.success) throw new Error(`Cloudflare preflight failed (${response.status}) for ${path}. Check the token permissions and resource configuration.`)
     return data.result
@@ -74,6 +75,7 @@ async function deploy() {
   const temporary = await mkdtemp(join(tmpdir(), 'zhiyu-deploy-'))
   try {
     await writeFile('wrangler.jsonc', JSON.stringify(config, null, 2) + '\n')
+    await command(['pages', 'functions', 'build', '--outdir', join(temporary, 'functions-check')])
     await command(['d1', 'migrations', 'apply', 'DB', '--remote'])
     if (process.env.SEED_PUBLIC_DEMO === 'true') {
       const path = join(temporary, 'public-starter.sql')

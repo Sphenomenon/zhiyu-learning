@@ -1,9 +1,23 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { execFile } from 'node:child_process'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
+import { promisify } from 'node:util'
 import { deploymentConfig, checkProject } from '../scripts/deploy-cloudflare.mjs'
 import { publicSeedSql } from '../scripts/public-seed.mjs'
 
 const environment = { CLOUDFLARE_ACCOUNT_ID: 'a'.repeat(32), CLOUDFLARE_D1_DATABASE_ID: '12345678-1234-1234-1234-123456789abc' }
+test('generated production config passes the installed Wrangler Pages validator and compiles Functions', async () => {
+  const temporary = await mkdtemp(join(tmpdir(), 'zhiyu-pages-config-'))
+  try {
+    await writeFile(join(temporary, 'wrangler.jsonc'), JSON.stringify(deploymentConfig(environment)))
+    await promisify(execFile)(process.execPath, [resolve('node_modules/wrangler/bin/wrangler.js'),
+      'pages', 'functions', 'build', resolve('functions'), '--project-directory', temporary,
+      '--outdir', join(temporary, 'compiled')], { env: { ...process.env, WRANGLER_SEND_METRICS: 'false' } })
+  } finally { await rm(temporary, { recursive: true, force: true }) }
+})
 test('production configuration rejects missing or local database IDs and always disables development login', () => {
   assert.throws(() => deploymentConfig({}))
   assert.throws(() => deploymentConfig({ ...environment, CLOUDFLARE_D1_DATABASE_ID: '00000000-0000-0000-0000-000000000000' }))
