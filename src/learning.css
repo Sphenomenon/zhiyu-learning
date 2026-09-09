@@ -1,0 +1,98 @@
+body:has(.bz-learning) { min-width: 0; }
+.bz-curriculum-dialog { width: min(1180px, calc(100% - 24px)); max-width: 1180px; max-height: 94dvh; }
+.bz-curriculum-form > p { margin: 0; color: var(--bz-muted); font-size: 13px; line-height: 1.8; }
+.bz-editor-status { color: var(--bz-gold) !important; }
+.bz-curriculum-workspace { display: grid; gap: 24px; min-width: 0; }
+.bz-curriculum-outline { border: 1px solid var(--bz-line); background: var(--bz-surface); border-radius: 12px; padding: 14px; min-width: 0; align-self: start; }
+.bz-outline-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; justify-content: space-between; }
+.bz-outline-heading strong { font-size: 14px; }
+.bz-outline-heading .bz-secondary { min-height: 44px; padding: 8px 12px; font-size: 12px; }
+.bz-curriculum-outline p { color: var(--bz-muted); font-size: 13px; line-height: 1.8; }
+.bz-curriculum-outline section { margin-top: 16px; }
+.bz-curriculum-outline :is(.bz-chapter-select, .bz-outline-lessons button) { width: 100%; display: flex; align-items: baseline; gap: 9px; padding: 12px 10px; border-radius: 8px; background: transparent; color: var(--bz-muted); text-align: left; line-height: 1.6; font-size: 13px; overflow-wrap: anywhere; }
+.bz-curriculum-outline .bz-chapter-select { color: var(--bz-text); font-weight: 700; }
+.bz-curriculum-outline button span { flex-shrink: 0; font: 11px var(--font-mono); color: var(--bz-gold); }
+.bz-outline-lessons { margin-left: 10px; border-left: 1px solid var(--bz-line); padding-left: 6px; }
+.bz-curriculum-outline button.active { background: var(--bz-gold-glow); color: var(--bz-gold); }
+.bz-curriculum-detail, .bz-lesson-editor, .bz-video-fields { display: grid; gap: 18px; min-width: 0; }
+.bz-curriculum-detail > .bz-editor-tabs { margin-top: 0; }
+.bz-editor-section-title { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.bz-editor-section-title > label { flex: 1 1 200px; min-width: 0; }
+.bz-lesson-editor { border-top: 1px solid var(--bz-line); padding-top: 22px; margin-top: 6px; }
+.bz-block-actions { display: flex; gap: 5px; flex-shrink: 0; }
+.bz-block-actions button { width: 44px; height: 44px; border: 1px solid var(--bz-line); border-radius: 8px; color: var(--bz-muted); background: var(--bz-bg); display: grid; place-items: center; }
+.bz-block-actions svg { width: 16px; height: 16px; }
+.bz-content-block { display: grid; gap: 14px; padding: 16px; border: 1px solid var(--bz-line); border-radius: 11px; min-width: 0; background: var(--bz-surface); }
+.bz-block-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bz-block-heading strong { font-size: 13px; }
+.bz-block-image { width: 100%; max-height: 320px; object-fit: contain; border-radius: 8px; background: var(--bz-bg); }
+.bz-upload-label { border: 1px dashed var(--bz-line-strong); border-radius: 9px; padding: 14px; }
+.bz-upload-label > span { display: flex; align-items: center; gap: 8px; }
+.bz-upload-label svg { width: 16px; }
+.bz-server-form .bz-upload-label input { border: 0; padding: 10px 0; font-size: 13px; min-width: 0; background: transparent; }
+.bz-video-fields { padding: 18px; border: 1px solid var(--bz-line); border-left: 3px solid var(--bz-gold); border-radius: 10px; }
+.bz-curriculum-save { padding: 8px 0 max(8px, env(safe-area-inset-bottom)); }
+.bz-curriculum-save .bz-notice { margin: 8px 0; padding: 8px 12px; }
+.bz-curriculum-save .bz-action-row { margin: 8px 0; }
+.bz-lesson-preview { padding: 20px; background: var(--bz-surface); border: 1px solid var(--bz-line); border-radius: 11px; min-width: 0; }
+.bz-owned-actions { display: flex; flex-wrap: wrap; gap: 10px; grid-column: 1 / -1; }
+.bz-course-detail > button { margin-right: 10px; margin-bottom: 10px; }
+.bz-learning { padding-top: 30px; }
+.bz-learning-heading { padding: 28px 0; }
+.bz-learning-heading > span { color: var(--bz-gold); font: 11px var(--font-mono); letter-spacing: .15em; }
+.bz-learning-heading h1 { font: 700 clamp(26px, 4vw, 40px)/1.45 var(--font-display); margin: 14px 0; overflow-wrap: anywhere; }
+.bz-learning-heading p { font-size: 14px; color: var(--bz-muted); line-height: 1.9; }
+.bz-learning-layout { display: grid; gap: 24px; min-width: 0; }
+.bz-learning-outline { border: 1px solid var(--bz-line); border-radius: 13px; padding: 18px; background: var(--bz-surface); min-width: 0; align-self: start; }
+.bz-learning-outline h2 { font-size: 16px; margin: 0 0 12px; }
+.bz-learning-outline h3 { display: flex; align-items: baseline; gap: 10px; font-size: 14px; line-height: 1.7; margin: 22px 0 8px; overflow-wrap: anywhere; }
+.bz-learning-outline h3 > span { font: 11px var(--font-mono); color: var(--bz-gold); }
+.bz-learning-outline p { font-size: 13px; color: var(--bz-muted); }
+.bz-learning-outline nav a { display: flex; align-items: baseline; gap: 10px; padding: 12px 10px; border-radius: 8px; font-size: 13px; line-height: 1.7; color: var(--bz-muted); text-decoration: none; overflow-wrap: anywhere; min-height: 44px; }
+.bz-learning-outline nav a > span:first-child { flex-shrink: 0; font: 11px var(--font-mono); }
+.bz-learning-outline nav a > span:nth-child(2) { flex: 1; }
+.bz-learning-outline nav a > svg { flex-shrink: 0; width: 14px; height: 14px; }
+.bz-learning-outline nav a[aria-current] { color: var(--bz-gold); background: var(--bz-gold-glow); }
+.bz-learning-article { padding: 24px 20px; border: 1px solid var(--bz-line); border-radius: 14px; background: var(--bz-surface); min-width: 0; }
+.bz-lesson-breadcrumb { color: var(--bz-muted); font-size: 12px; line-height: 1.8; overflow-wrap: anywhere; }
+.bz-lesson-title { font: 700 clamp(23px, 3vw, 32px)/1.5 var(--font-display); margin: 18px 0 28px; overflow-wrap: anywhere; scroll-margin-top: 105px; }
+.bz-lesson-prose { overflow-wrap: anywhere; }
+.bz-lesson-prose h3 { font: 700 21px/1.6 var(--font-display); color: var(--bz-text); margin: 30px 0 16px; white-space: pre-wrap; }
+.bz-lesson-prose p { font-size: 16px; line-height: 2; color: var(--bz-text); white-space: pre-wrap; margin: 18px 0; }
+.bz-lesson-prose figure { margin: 26px 0; }
+.bz-lesson-prose img { max-width: 100%; height: auto; margin-inline: auto; border-radius: 9px; }
+.bz-lesson-prose figcaption { color: var(--bz-muted); font-size: 13px; line-height: 1.8; text-align: center; margin-top: 12px; white-space: pre-wrap; }
+.bz-lesson-video { margin-top: 34px; padding: 22px; border: 1px solid var(--bz-line); border-left: 3px solid var(--bz-gold); border-radius: 12px; background: var(--bz-bg); }
+.bz-lesson-video > div:first-child { display: flex; align-items: center; gap: 10px; }
+.bz-lesson-video h3 { margin: 0; font-size: 18px; }
+.bz-lesson-video svg { width: 19px; color: var(--bz-gold); }
+.bz-lesson-video p { font-size: 14px; line-height: 1.9; color: var(--bz-muted); }
+.bz-lesson-video code { color: var(--bz-gold); font-size: 17px; user-select: all; }
+.bz-lesson-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--bz-line); }
+.bz-lesson-pagination > span { font-size: 13px; line-height: 1.8; color: var(--bz-muted); }
+.bz-lesson-locked { padding: 32px 0; }
+.bz-lesson-locked > svg { color: var(--bz-gold); width: 30px; height: 30px; }
+.bz-lesson-locked h2 { font: 700 24px/1.6 var(--font-display); }
+.bz-lesson-locked p { color: var(--bz-muted); line-height: 1.9; }
+@media (min-width: 900px) {
+  .bz-curriculum-workspace { grid-template-columns: 270px minmax(0, 1fr); }
+  .bz-curriculum-outline { position: sticky; top: 0; max-height: 62dvh; overflow: auto; }
+  .bz-learning-layout { grid-template-columns: 280px minmax(0, 1fr); }
+  .bz-learning-outline { position: sticky; top: 100px; max-height: calc(100dvh - 140px); overflow: auto; }
+  .bz-learning-article { padding: 36px 42px; }
+  .bz-outline-toggle { display: none; }
+}
+@media (max-width: 899px) {
+  .bz-curriculum-outline { max-height: 280px; overflow: auto; }
+  .bz-learning-outline:not(.is-open) > nav { display: none; }
+}
+@media (max-width: 420px) {
+  .bz-curriculum-dialog .bz-modal { padding: 28px 14px 14px; }
+  .bz-block-heading { flex-wrap: wrap; }
+  .bz-content-block, .bz-video-fields, .bz-lesson-preview { padding: 12px; }
+  .bz-curriculum-save .bz-action-row > button { flex: 1 1 100%; }
+  .bz-lesson-video { padding: 16px; }
+  .bz-lesson-video > a { width: 100%; padding-inline: 10px; }
+  .bz-learning-article { padding: 22px 16px; }
+  .bz-lesson-pagination > a { flex: 1 1 100%; }
+}

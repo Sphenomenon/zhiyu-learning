@@ -5,14 +5,14 @@ export class ApiError extends Error {
   status: number
   constructor(code: string, status = 0) { super(code); this.code = code; this.status = status }
 }
-export async function api<T>(path: string, options: { method?: string; data?: unknown; signal?: AbortSignal } = {}): Promise<T> {
+export async function api<T>(path: string, options: { method?: string; data?: unknown; file?: File; signal?: AbortSignal } = {}): Promise<T> {
   let response: Response
   try {
     response = await fetch(`/api${path}`, {
-      method: options.method || (options.data === undefined ? 'GET' : 'POST'),
+      method: options.method || (options.data === undefined && !options.file ? 'GET' : 'POST'),
       credentials: 'same-origin', cache: 'no-store', signal: options.signal,
-      headers: options.data === undefined ? undefined : { 'Content-Type': 'application/json' },
-      body: options.data === undefined ? undefined : JSON.stringify(options.data),
+      headers: options.file ? { 'Content-Type': options.file.type || 'application/octet-stream' } : options.data === undefined ? undefined : { 'Content-Type': 'application/json' },
+      body: options.file || (options.data === undefined ? undefined : JSON.stringify(options.data)),
     })
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') throw error
@@ -24,6 +24,12 @@ export async function api<T>(path: string, options: { method?: string; data?: un
   return data as T
 }
 const messages: Record<string, [string, string]> = {
+  CURRICULUM_LIMIT: ['课程最多包含 50 章、500 小节，每小节最多 100 个图文块。', 'A course supports up to 50 chapters, 500 lessons, and 100 blocks per lesson.'],
+  DUPLICATE_LESSON_ID: ['章节、小节或图文块的编号重复，请刷新后重试。', 'Chapter, lesson or block IDs are duplicated. Refresh and try again.'],
+  LESSON_EMPTY: ['发布前请为每一章添加小节，并为每个小节填写图文或影片链接。', 'Add lessons to every chapter and text, images or a video link to every lesson before publishing.'],
+  INVALID_IMAGE_FILE: ['请选择 JPG、PNG 或 WebP 图片。', 'Choose a JPG, PNG or WebP image.'],
+  IMAGE_STORAGE_UNAVAILABLE: ['图片存储尚未连接，请联系网站维护者。', 'Image storage is not connected. Please contact the site maintainer.'],
+  BODY_TOO_LARGE: ['内容超过大小限制：课程内容最多 1 MB，单张图片最多 5 MB。', 'Size limit exceeded: course content can be up to 1 MB; each image up to 5 MB.'],
   NETWORK_ERROR: ['连接中断，请检查网络后重试。', 'Connection interrupted. Check your network and try again.'],
   API_UNAVAILABLE: ['后端尚未连接。本地开发请运行 pnpm dev。', 'The backend is unavailable. For local development, run pnpm dev.'],
   INTERNAL_ERROR: ['服务暂时不可用，请稍后重试。你的输入仍然保留。', 'The service is temporarily unavailable. Your input has been kept.'],

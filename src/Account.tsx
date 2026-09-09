@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { ArrowRight, Copy, FolderDown, KeyRound, LogOut, Settings, X } from 'lucide-react'
+import { ArrowRight, BookOpen, Copy, FolderDown, KeyRound, LogOut, Settings, X } from 'lucide-react'
 import type { Course, CourseResource, Language, SessionState } from '../shared/types'
 import { api, errorMessage } from './api'
 import { tx } from './catalog'
@@ -7,11 +7,11 @@ import { tx } from './catalog'
 export function Notice({ children, error = false }: { children: React.ReactNode; error?: boolean }) {
   return <div className={`bz-notice ${error ? 'is-error' : ''}`} role={error ? 'alert' : 'status'}>{children}</div>
 }
-export function Modal({ title, language, onClose, children }: { title: string; language: Language; onClose: () => void; children: React.ReactNode }) {
+export function Modal({ title, language, onClose, children, className = '' }: { title: string; language: Language; onClose: () => void; children: React.ReactNode; className?: string }) {
   const ref = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   useEffect(() => { ref.current?.showModal(); return () => ref.current?.close() }, [])
-  return <dialog ref={ref} className="bz-dialog" aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose() }} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
+  return <dialog ref={ref} className={`bz-dialog ${className}`} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose() }} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <div className="bz-modal"><button className="bz-modal-close" onClick={onClose} aria-label={tx(language, '关闭', 'Close')}><X /></button><h2 id={titleId}>{title}</h2>{children}</div>
   </dialog>
 }
@@ -72,10 +72,10 @@ function ResourceDialog({ course, language, onClose }: { course: Course; languag
   const copy = async () => { try { await navigator.clipboard.writeText(resource!.extractionCode); setCopied(true) } catch { setCopied(false); setError(new Error('Clipboard unavailable')) } }
   return <Modal title={language === 'en' && course.en ? course.en.title : course.title} language={language} onClose={onClose}>
     {Boolean(error) && <Notice error>{errorMessage(error, language)}</Notice>}{!resource && !error && <p role="status">{tx(language, '正在核验课程权限…', 'Checking course access…')}</p>}
-    {resource && <div className="bz-resource-delivery"><p>{tx(language, '视频和课件通过百度网盘交付，本站不播放付费视频。请勿转发课程资料。', 'Video and materials are delivered through Baidu Netdisk, not streamed here. Please do not redistribute them.')}</p><label>{tx(language, '提取码', 'Extraction code')}<strong className="bz-code-text">{resource.extractionCode}</strong></label><button className="bz-secondary" onClick={copy}><Copy />{copied ? tx(language, '已复制', 'Copied') : tx(language, '复制提取码', 'Copy code')}</button><a className="bz-primary" href={resource.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer"><FolderDown />{tx(language, '打开百度网盘', 'Open Baidu Netdisk')}</a>{resource.note && <p className="bz-preserve-lines">{resource.note}</p>}</div>}
+    {resource && <div className="bz-resource-delivery"><p>{tx(language, '这是原有的整课影片链接。小节图文请进入课程阅读，影片在百度网盘打开。', 'This is the existing course video archive. Read lesson text and images in the course; videos open in Baidu Netdisk.')}</p><label>{tx(language, '提取码', 'Extraction code')}<strong className="bz-code-text">{resource.extractionCode}</strong></label><button className="bz-secondary" onClick={copy}><Copy />{copied ? tx(language, '已复制', 'Copied') : tx(language, '复制提取码', 'Copy code')}</button><a className="bz-primary" href={resource.url} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer"><FolderDown />{tx(language, '打开百度网盘', 'Open Baidu Netdisk')}</a>{resource.note && <p className="bz-preserve-lines">{resource.note}</p>}</div>}
   </Modal>
 }
-export function AccountView({ language, session, onRefresh, onAdmin }: { language: Language; session: SessionState; onRefresh: () => Promise<void>; onAdmin: () => void }) {
+export function AccountView({ language, session, onRefresh, onAdmin, onCourse }: { language: Language; session: SessionState; onRefresh: () => Promise<void>; onAdmin: () => void; onCourse?: (courseId: string) => void }) {
   const [courses, setCourses] = useState<Course[]>([])
   const [resource, setResource] = useState<Course | null>(null)
   const [error, setError] = useState<unknown>(null)
@@ -90,7 +90,7 @@ export function AccountView({ language, session, onRefresh, onAdmin }: { languag
     {Boolean(error) && <Notice error>{errorMessage(error, language)}</Notice>}
     <section className="bz-panel"><h2>{tx(language, '密钥兑换', 'Redeem a key')}</h2><RedeemForm language={language} onRedeemed={refresh} /></section>
     <section className="bz-panel"><h2>{tx(language, '我的课程与资料', 'My programs and resources')}</h2>{!session.courseIds.length && <p>{tx(language, '还没有开通课程。可联系老师开通，或在上方兑换课程密钥。', 'No programs unlocked yet. Contact the instructor or redeem a course key above.')}</p>}
-      <div className="bz-owned-courses">{courses.map(course => <article className="bz-owned-course" key={course.id}><img src={course.imageUrl || '/images/course-structure.jpg'} alt="" /><div><span>{tx(language, '已开通', 'ACCESS ENABLED')}</span><h3>{language === 'en' && course.en ? course.en.title : course.title}</h3><p>{tx(language, '网盘资料与提取码', 'Netdisk files and extraction code')}</p></div><button className="bz-primary" onClick={() => setResource(course)}><FolderDown />{tx(language, '领取资料', 'Get resources')}</button></article>)}</div>
+      <div className="bz-owned-courses">{courses.map(course => <article className="bz-owned-course" key={course.id}><img src={course.imageUrl || '/images/course-structure.jpg'} alt="" /><div><span>{tx(language, '已开通', 'ACCESS ENABLED')}</span><h3>{language === 'en' && course.en ? course.en.title : course.title}</h3><p>{tx(language, '章节图文与选填影片', 'Lesson text, images and optional videos')}</p></div><div className="bz-owned-actions"><button className="bz-primary" onClick={() => onCourse ? onCourse(course.id) : (window.location.hash = `learn/${course.id}`)}><BookOpen />{tx(language, '进入课程', 'Read course')}</button>{course.hasVideoArchive && <button className="bz-secondary" onClick={() => setResource(course)}><FolderDown />{tx(language, '整课影片（旧版）', 'Video archive (legacy)')}</button>}</div></article>)}</div>
     </section><section className="bz-panel"><h2>{tx(language, '账号说明', 'About your account')}</h2><p>{tx(language, '当前使用本机测试身份。手机号、微信绑定及账号找回尚未开放，不会显示未经验证的“已绑定”状态。网盘内的播放进度无法同步到本站。', 'This is a local test identity. Phone/WeChat binding and account recovery are not available yet. Playback progress inside Netdisk cannot be synchronized with this site.')}</p></section>
     {resource && <ResourceDialog key={resource.id} course={resource} language={language} onClose={() => setResource(null)} />}
   </main>

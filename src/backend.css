@@ -1,4 +1,5 @@
 /* Server-backed forms reuse the established walnut / brass palette. */
+body:has(.bz-admin) { min-width: 0; }
 .bz-notice { margin: 16px 0; padding: 16px 18px; border: 1px solid var(--bz-line); border-left: 3px solid var(--bz-gold); border-radius: 10px; background: var(--bz-surface); color: var(--bz-muted); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
 .bz-notice.is-error { border-left-color: #d97865; color: var(--bz-text); }
 .bz-notice p { margin: 0 0 8px; }
@@ -66,6 +67,29 @@ body:has(.bz-dialog[open]) { overflow: hidden; }
 .bz-cover-preview img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; }
 .bz-cover-preview figcaption { margin-top: 8px; color: var(--bz-muted); font-size: 12px; }
 .bz-sticky-actions { position: sticky; bottom: -1px; padding: 12px 0; margin-bottom: 0; background: var(--bz-bg); border-top: 1px solid var(--bz-line); z-index: 1; }
+.bz-record-search { grid-template-columns: minmax(0, 1fr); align-items: end; padding-bottom: 18px; border-bottom: 1px solid var(--bz-line); }
+.bz-record-search .bz-action-row { margin: 0; }
+.bz-record-search .bz-action-row button { flex: 1; }
+.bz-record-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid var(--bz-line); padding-top: 18px; }
+.bz-record-pagination > span { color: var(--bz-muted); font-size: 13px; }
+.bz-record-pagination .bz-action-row { margin: 0; }
+.bz-record-badge { display: inline-block; padding: 4px 9px; border-radius: 6px; margin: 2px 0 8px; background: var(--bz-bg); color: var(--bz-muted); font-size: 12px; border: 1px solid var(--bz-line); }
+.bz-record-badge.is-available, .bz-record-list article.is-selected { background: var(--bz-gold-glow); }
+.bz-record-badge.is-available { color: var(--bz-gold); }
+.bz-record-list article.is-selected { padding-inline: 12px; border-radius: 8px; }
+.bz-selected-learner { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--bz-line); border-left: 3px solid var(--bz-gold); border-radius: 9px; overflow-wrap: anywhere; }
+.bz-selected-learner span, .bz-selected-learner p { margin: 0; font-size: 13px; color: var(--bz-muted); }
+.bz-selected-learner small { color: var(--bz-faint); font-size: 11px; }
+.bz-admin button:focus-visible { outline: 2px solid var(--bz-gold); outline-offset: 3px; }
+.bz-admin-mobile-nav { position: sticky; top: 0; z-index: 5; }
+.bz-admin-mobile-nav button, .bz-dialog .bz-modal-close { min-width: 44px; min-height: 44px; }
+.bz-admin-main > header > div { min-width: 0; }
+.bz-admin-main > header h1 { overflow-wrap: anywhere; }
+@media (max-width: 759px) {
+  .bz-admin-mobile-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; }
+  .bz-admin-mobile-nav button { padding: 8px 6px; border-radius: 9px; line-height: 1.4; overflow-wrap: anywhere; }
+  .bz-admin :is(input, select, textarea) { scroll-margin-top: 135px; }
+}
 @media (min-width: 700px) {
   .bz-owned-course { grid-template-columns: 86px minmax(0, 1fr) auto; }
   .bz-owned-course img { width: 86px; height: 86px; }
@@ -74,10 +98,20 @@ body:has(.bz-dialog[open]) { overflow: hidden; }
   .bz-record-list article { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   .bz-record-list article .bz-action-row { justify-content: flex-end; max-width: 370px; }
 }
+@media (min-width: 1000px) {
+  .bz-record-search { grid-template-columns: minmax(0, 1fr) minmax(160px, .5fr) auto; }
+  .bz-record-search:not(:has(select)) { grid-template-columns: minmax(0, 1fr) auto; }
+}
 @media (max-width: 420px) {
   .bz-padded-card { padding: 16px; }
   .bz-dialog .bz-modal { padding: 28px 20px 18px; }
   .bz-sticky-actions > button { flex: 1 1 100%; }
   .bz-admin-main > header > .bz-action-row { gap: 6px; margin-top: 0; }
   .bz-admin-main > header > .bz-action-row .bz-secondary { padding-inline: 12px; font-size: 11px; }
+  .bz-admin-main > header { flex-direction: column; }
+  .bz-admin-main > header > .bz-action-row { margin-bottom: 0; }
+  .bz-record-pagination .bz-action-row { width: 100%; }
+  .bz-record-pagination button { flex: 1; padding-inline: 12px; }
+  .bz-record-list article > .bz-action-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bz-record-list article > .bz-action-row button { padding-inline: 10px; }
 }

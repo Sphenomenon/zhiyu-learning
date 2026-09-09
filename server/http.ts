@@ -1,4 +1,4 @@
-export type Env = { DB: D1Database; AUTH_MODE?: string; LOCAL_ADMIN_EMAIL?: string }
+export type Env = { DB: D1Database; COURSE_IMAGES?: R2Bucket; AUTH_MODE?: string; LOCAL_ADMIN_EMAIL?: string }
 
 export class ApiError extends Error {
   status: number
@@ -25,8 +25,7 @@ export function json(data: unknown, status = 200, extra?: HeadersInit) {
   headers.set('Vary', 'Cookie')
   return new Response(JSON.stringify(data), { status, headers })
 }
-export async function body(request: Request): Promise<Record<string, unknown>> {
-  if (!request.headers.get('content-type')?.startsWith('application/json')) fail(415, 'JSON_REQUIRED')
+export async function readBytes(request: Request, maximum: number) {
   // Bound the actual stream, not just the untrusted Content-Length header.
   const reader = request.body?.getReader()
   if (!reader) return fail(400, 'INVALID_INPUT')
@@ -36,12 +35,17 @@ export async function body(request: Request): Promise<Record<string, unknown>> {
     const { done, value } = await reader.read()
     if (done) break
     size += value.byteLength
-    if (size > 48_000) { await reader.cancel(); return fail(413, 'BODY_TOO_LARGE') }
+    if (size > maximum) { await reader.cancel(); return fail(413, 'BODY_TOO_LARGE') }
     chunks.push(value)
   }
   const bytes = new Uint8Array(size)
   let offset = 0
   for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length }
+  return bytes
+}
+export async function body(request: Request, maximum = 48_000): Promise<Record<string, unknown>> {
+  if (!request.headers.get('content-type')?.startsWith('application/json')) fail(415, 'JSON_REQUIRED')
+  const bytes = await readBytes(request, maximum)
   let parsed: unknown
   try { parsed = JSON.parse(new TextDecoder().decode(bytes)) } catch { return fail(400, 'INVALID_INPUT') }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return fail(400, 'INVALID_INPUT')

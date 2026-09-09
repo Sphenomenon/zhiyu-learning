@@ -5,8 +5,9 @@ import { courseImages, tx } from './catalog'
 import { api, errorMessage } from './api'
 import { AccountView, Modal, Notice, RedeemForm } from './Account'
 import { AdminView } from './Admin'
+import { LearningView, learningHref, learningRoute } from './LearningView'
 
-type View = 'home' | 'courses' | 'cases' | 'profile' | 'admin'
+type View = 'home' | 'courses' | 'cases' | 'profile' | 'admin' | 'learn'
 type Theme = 'light' | 'dark'
 const courseCopy = (course: Course, language: Language): Course => language === 'en' && course.en ? { ...course, ...course.en } : course
 const storyCopy = (story: Story, language: Language): Story => language === 'en' && story.en ? { ...story, ...story.en } : story
@@ -84,7 +85,7 @@ function HomeView({ content, stories, courses, language, onNavigate }: { content
     </section>
 
     <section className="bz-membership">
-      <div className="bz-container bz-membership-grid"><div><span className="bz-eyebrow">A CLEAR LEARNING PATH</span><h2>{tx(language, '课程、资料和学习记录，都在一个地方。', 'Your programs, resources, and progress in one place.')}</h2><p>{tx(language, '登录个人中心即可查看已购课程、学习路径、百度网盘链接和提取码。需要继续学习时，不必再翻找聊天记录。', 'Sign in to access purchased programs, your learning path, and all Baidu Netdisk links and extraction codes without searching through old messages.')}</p><button className="bz-primary" onClick={() => onNavigate('profile')}>{tx(language, '进入个人中心', 'Open my account')} <ArrowRight /></button></div><div className="bz-dashboard-preview"><div className="bz-preview-head"><span>{tx(language, '个人中心功能示意', 'ACCOUNT PREVIEW')}</span><small>{tx(language, '已解锁 2 门课程', '2 programs unlocked')}</small></div><div className="bz-preview-progress"><span>{tx(language, '本月学习进度', 'Progress this month')}</span><strong>68%</strong><i><b /></i></div>{courses.slice(0, 2).map((course, i) => { const item = courseCopy(course, language); return <div className="bz-preview-course" key={course.id}><span>0{i + 1}</span><div><strong>{item.title}</strong><small>{i ? tx(language, '查看课程资料', 'View resources') : tx(language, '继续当前路径', 'Continue learning')}</small></div><ChevronRight /></div> })}</div></div>
+      <div className="bz-container bz-membership-grid"><div><span className="bz-eyebrow">A CLEAR LEARNING PATH</span><h2>{tx(language, '课程、资料和学习记录，都在一个地方。', 'Your programs, resources, and progress in one place.')}</h2><p>{tx(language, '登录个人中心，按章节阅读图文、回顾练习。需要影片的小节会提供百度网盘入口。', 'Sign in to read lesson text and images by chapter and revisit exercises. Video links appear only where provided.')}</p><button className="bz-primary" onClick={() => onNavigate('profile')}>{tx(language, '进入个人中心', 'Open my account')} <ArrowRight /></button></div><div className="bz-dashboard-preview"><div className="bz-preview-head"><span>{tx(language, '个人中心功能示意', 'ACCOUNT PREVIEW')}</span><small>{tx(language, '已解锁 2 门课程', '2 programs unlocked')}</small></div><div className="bz-preview-progress"><span>{tx(language, '本月学习进度', 'Progress this month')}</span><strong>68%</strong><i><b /></i></div>{courses.slice(0, 2).map((course, i) => { const item = courseCopy(course, language); return <div className="bz-preview-course" key={course.id}><span>0{i + 1}</span><div><strong>{item.title}</strong><small>{i ? tx(language, '查看课程资料', 'View resources') : tx(language, '继续当前路径', 'Continue learning')}</small></div><ChevronRight /></div> })}</div></div>
     </section>
 
     {featured && <section className="bz-section bz-container bz-story-preview">
@@ -96,10 +97,10 @@ function HomeView({ content, stories, courses, language, onNavigate }: { content
   </main>
 }
 
-function CoursesView({ courses, unlocked, language, onUnlock, onProfile }: { courses: Course[]; unlocked: string[]; language: Language; onUnlock: (course: Course) => void; onProfile: () => void }) {
+function CoursesView({ courses, unlocked, language, onUnlock, onCourse }: { courses: Course[]; unlocked: string[]; language: Language; onUnlock: (course: Course) => void; onCourse: (courseId: string) => void }) {
   return <main className="bz-inner bz-container">
     <div className="bz-page-intro"><span>COURSE LIBRARY</span><h1>{tx(language, '从一个具体问题开始，建立一套长期能用的方法。', 'Start with a real problem. Build a method you can keep using.')}</h1><p>{tx(language, '课程按学习阶段设计。你可以按顺序完成，也可以从当前最需要解决的主题开始。', 'Programs are organized by learning stage. Follow the complete path or begin with the subject you need now.')}</p></div>
-    <div className="bz-course-list">{courses.map((course, index) => { const active = unlocked.includes(course.id); const item = courseCopy(course, language); return <article key={course.id}><CourseMedia course={course} index={index} language={language} /><div className="bz-course-detail"><div className="bz-card-meta">{tx(language, '课程', 'PROGRAM')} {item.index} / {item.level}</div><h2>{item.title}</h2><h3>{item.subtitle}</h3><p>{item.description}</p><div className="bz-course-facts"><span><BookOpen /> {item.lessons} {tx(language, '个学习单元', 'learning units')}</span><span><FolderDown /> {tx(language, '视频与课件通过百度网盘交付', 'Video and course files via Baidu Netdisk')}</span><span><BadgeCheck /> {tx(language, '包含后续课程更新', 'Future course updates included')}</span></div>{active ? <button className="bz-primary" onClick={onProfile}>{tx(language, '进入我的课程', 'Open my program')} <ArrowRight /></button> : <button className="bz-primary" onClick={() => onUnlock(course)}><LockKeyhole /> {tx(language, '获取课程权限', 'Get access')}</button>}</div></article> })}</div>
+    <div className="bz-course-list">{courses.map((course, index) => { const active = unlocked.includes(course.id); const item = courseCopy(course, language); return <article key={course.id}><CourseMedia course={course} index={index} language={language} /><div className="bz-course-detail"><div className="bz-card-meta">{tx(language, '课程', 'PROGRAM')} {item.index} / {item.level}</div><h2>{item.title}</h2><h3>{item.subtitle}</h3><p>{item.description}</p><div className="bz-course-facts"><span><BookOpen /> {item.lessons} {tx(language, '个学习单元', 'learning units')}</span><span><FolderDown /> {tx(language, '章节图文在线阅读，影片按需打开', 'Read lessons here, open videos when provided')}</span><span><BadgeCheck /> {tx(language, '包含后续课程更新', 'Future course updates included')}</span></div>{active ? <button className="bz-primary" onClick={() => onCourse(course.id)}>{tx(language, '进入我的课程', 'Open my program')} <ArrowRight /></button> : <button className="bz-primary" onClick={() => onUnlock(course)}><LockKeyhole /> {tx(language, '获取课程权限', 'Get access')}</button>}{!active && <button className="bz-secondary" onClick={() => onCourse(course.id)}><BookOpen />{tx(language, '查看课程目录', 'View course outline')}</button>}</div></article> })}</div>
   </main>
 }
 
@@ -120,6 +121,7 @@ function Footer({ language, onNavigate }: { language: Language; onNavigate: (vie
 }
 
 function currentView(): View {
+  if (learningRoute()) return 'learn'
   const hash = window.location.hash.slice(1)
   return ['home', 'courses', 'cases', 'profile', 'admin'].includes(hash) ? hash as View : 'home'
 }
@@ -128,6 +130,7 @@ function preference(key: string, fallback: string) {
 }
 function AppBusiness() {
   const [view, setView] = useState<View>(currentView)
+  const [lessonRoute, setLessonRoute] = useState(learningRoute)
   const [theme, setTheme] = useState<Theme>(() => preference('zhiyu-theme', 'dark') === 'light' ? 'light' : 'dark')
   const [language, setLanguage] = useState<Language>(() => preference('zhiyu-language', 'zh') === 'en' ? 'en' : 'zh')
   const [content, setContent] = useState<SiteContent | null>(null)
@@ -155,11 +158,12 @@ function AppBusiness() {
     return () => window.removeEventListener('focus', reload)
   }, [refreshSession, refreshContent])
   const navigate = (next: View) => { setView(next); window.location.hash = next; window.scrollTo({ top: 0, behavior: 'smooth' }) }
+  const openCourse = (courseId: string) => { window.location.hash = learningHref(courseId); setLessonRoute({ courseId }); setView('learn'); window.scrollTo({ top: 0 }) }
   const toggleLanguage = () => setLanguage(current => current === 'zh' ? 'en' : 'zh')
   useEffect(() => { document.documentElement.dataset.theme = theme; try { localStorage.setItem('zhiyu-theme', theme) } catch { /* storage is optional */ } }, [theme])
   useEffect(() => { document.documentElement.lang = language === 'zh' ? 'zh-CN' : 'en'; try { localStorage.setItem('zhiyu-language', language) } catch { /* storage is optional */ } }, [language])
-  useEffect(() => { const listener = () => setView(currentView()); window.addEventListener('hashchange', listener); return () => window.removeEventListener('hashchange', listener) }, [])
-  const title = useMemo(() => language === 'zh' ? ({ home: '知屿课程 · 专业知识课程', courses: '课程体系 · 知屿课程', cases: '案例墙 · 知屿课程', profile: '个人中心 · 知屿课程', admin: '内容后台 · 知屿课程' })[view] : ({ home: 'ZHIYU Learning · Professional Courses', courses: 'Programs · ZHIYU Learning', cases: 'Student Results · ZHIYU Learning', profile: 'My Account · ZHIYU Learning', admin: 'Creator Admin · ZHIYU Learning' })[view], [view, language])
+  useEffect(() => { const listener = () => { setView(currentView()); setLessonRoute(learningRoute()) }; window.addEventListener('hashchange', listener); return () => window.removeEventListener('hashchange', listener) }, [])
+  const title = useMemo(() => language === 'zh' ? ({ home: '知屿课程 · 专业知识课程', courses: '课程体系 · 知屿课程', cases: '案例墙 · 知屿课程', profile: '个人中心 · 知屿课程', admin: '内容后台 · 知屿课程', learn: '课程阅读 · 知屿课程' })[view] : ({ home: 'ZHIYU Learning · Professional Courses', courses: 'Programs · ZHIYU Learning', cases: 'Student Results · ZHIYU Learning', profile: 'My Account · ZHIYU Learning', admin: 'Creator Admin · ZHIYU Learning', learn: 'Course Reader · ZHIYU Learning' })[view], [view, language])
   useEffect(() => { document.title = title }, [title])
   useEffect(() => {
     if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
@@ -178,11 +182,12 @@ function AppBusiness() {
   const bottomItems = [{ id: 'home', label: tx(language, '首页', 'Home'), icon: Home }, { id: 'courses', label: tx(language, '课程', 'Programs'), icon: Library }, { id: 'cases', label: tx(language, '案例', 'Results'), icon: ClipboardList }, { id: 'profile', label: tx(language, '我的', 'Account'), icon: UserRound }]
   return <div className={'bz-app bz-lang-' + language}>
     <PublicHeader view={view} theme={theme} language={language} onNavigate={navigate} onAbout={about} onToggleTheme={() => setTheme(theme === 'dark' ? 'light' : 'dark')} onToggleLanguage={toggleLanguage} />{status}
-    {!contentReady && view !== 'profile' && !error && <main className="bz-inner bz-container"><p role="status">{tx(language, '正在读取课程内容…', 'Loading course content…')}</p></main>}
+    {!contentReady && view !== 'profile' && view !== 'learn' && !error && <main className="bz-inner bz-container"><p role="status">{tx(language, '正在读取课程内容…', 'Loading course content…')}</p></main>}
     {view === 'home' && contentReady && (content ? <HomeView content={content} stories={stories} courses={courses} language={language} onNavigate={navigate} /> : <main className="bz-inner bz-container"><Notice>{tx(language, '首页内容尚未发布。', 'Homepage content has not been published yet.')}</Notice></main>)}
-    {view === 'courses' && contentReady && <CoursesView courses={courses} unlocked={session?.courseIds || []} language={language} onUnlock={openAccess} onProfile={() => navigate('profile')} />}
+    {view === 'courses' && contentReady && <CoursesView courses={courses} unlocked={session?.courseIds || []} language={language} onUnlock={openAccess} onCourse={openCourse} />}
+    {view === 'learn' && lessonRoute && <LearningView route={lessonRoute} session={session} language={language} onAccount={() => navigate('profile')} onAccess={() => { const course = courses.find(item => item.id === lessonRoute.courseId); if (course) openAccess(course); else navigate('profile') }} onBack={() => navigate('courses')} />}
     {view === 'cases' && contentReady && <CasesView stories={stories} language={language} />}
-    {view === 'profile' && (session ? <AccountView key={session.user?.id || 'guest'} language={language} session={session} onRefresh={refreshSession} onAdmin={() => navigate('admin')} /> : <main className="bz-inner bz-container"><p role="status">{tx(language, '正在连接账号服务…', 'Connecting to account services…')}</p></main>)}
+    {view === 'profile' && (session ? <AccountView key={session.user?.id || 'guest'} language={language} session={session} onRefresh={refreshSession} onAdmin={() => navigate('admin')} onCourse={openCourse} /> : <main className="bz-inner bz-container"><p role="status">{tx(language, '正在连接账号服务…', 'Connecting to account services…')}</p></main>)}
     <Footer language={language} onNavigate={navigate} /><nav className="bz-mobile-bottom" aria-label={tx(language, '手机导航', 'Mobile navigation')}>{bottomItems.map(({ id, label, icon: Icon }) => <button className={view === id ? 'active' : ''} key={id} onClick={() => navigate(id as View)}><Icon /><span>{label}</span></button>)}</nav>
     {unlockCourse && <Modal title={tx(language, '获取课程权限', 'Get course access')} language={language} onClose={() => setUnlockCourse(null)}><p>{courseCopy(unlockCourse, language).title}</p><RedeemForm language={language} onRedeemed={refreshSession} /><button className="bz-secondary" onClick={() => { setUnlockCourse(null); navigate('profile') }}>{tx(language, '查看我的课程', 'View my programs')}</button></Modal>}
   </div>

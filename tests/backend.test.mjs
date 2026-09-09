@@ -1,5 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { checkAdminLists } from './admin-lists.mjs'
+import { checkCurriculum } from './curriculum.mjs'
 
 const base = process.env.TEST_API_BASE
 if (!base?.startsWith('http://127.0.0.1:')) throw new Error('Tests only run against the isolated local runtime')
@@ -170,6 +172,8 @@ test('real Workers + D1 integration', async t => {
     assert.equal((await call('/admin/entitlements', { cookie: admin.cookie, data: operation })).data.replayed, true)
     assert.equal((await call('/me', { cookie: loser.cookie })).data.courseIds.includes('studio'), false)
   })
+  await checkAdminLists(t, call, admin.cookie, winner.cookie)
+  await checkCurriculum(t, call, base, admin, alice, bob)
   await t.test('logout revokes server session, not just browser state', async () => {
     const logout = await call('/auth/logout', { cookie: loser.cookie, data: {} })
     assert.equal(logout.status, 200)

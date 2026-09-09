@@ -1,6 +1,8 @@
 import { logout, requestCode, requireUser, sessionState, verifyCode } from './auth.ts'
-import { adminResource, createCode, listCodes, listStudents, manageEntitlement, redeem, resources, revokeCode } from './access.ts'
+import { adminResource, createCode, manageEntitlement, redeem, resources, revokeCode } from './access.ts'
+import { listCodes, listOrders, listStudents } from './admin-lists.ts'
 import { contentId, contentKind, listContent, publicContent, saveContent } from './content.ts'
+import { adminCurriculum, courseImage, courseOutline, learningContent, uploadCourseImage } from './curriculum.ts'
 import { ApiError, type Env, checkOrigin, fail, json, now } from './http.ts'
 
 async function dispatch(request: Request, env: Env): Promise<Response> {
@@ -20,20 +22,31 @@ async function dispatch(request: Request, env: Env): Promise<Response> {
     const user = await requireUser(request, env)
     // Once unpublished, the last published description is unavailable. Return
     // only a minimal title placeholder, never the working draft, to learners.
-    const published = await env.DB.prepare(`SELECT c.id, c.published_json FROM content_entries c
+    const published = await env.DB.prepare(`SELECT c.id, c.published_json,
+      EXISTS (SELECT 1 FROM course_resources r WHERE r.course_id = c.id) AS has_video_archive FROM content_entries c
       JOIN entitlements e ON e.course_id = c.id WHERE c.kind = 'course' AND e.user_id = ?
       AND e.revoked_at IS NULL AND (e.expires_at IS NULL OR e.expires_at > ?) ORDER BY c.id`)
-      .bind(user.id, now()).all<{ id: string; published_json: string | null }>()
-    return json({ items: published.results.map(row => row.published_json ? JSON.parse(row.published_json) : {
+      .bind(user.id, now()).all<{ id: string; published_json: string | null; has_video_archive: number }>()
+    return json({ items: published.results.map(row => ({ ...(row.published_json ? JSON.parse(row.published_json) : {
       id: row.id, title: '课程资料', label: '', subtitle: '', description: '', lessons: 0, index: '', duration: '', color: 'acid', level: '',
       en: { title: 'Course resources', label: '', subtitle: '', description: '', duration: '', level: '' },
-    }) })
+    }), hasVideoArchive: Boolean(row.has_video_archive) })) })
   }
   if (method === 'POST' && path === '/api/auth/code/request') return requestCode(request, env)
   if (method === 'POST' && path === '/api/auth/code/verify') return verifyCode(request, env)
   if (method === 'POST' && path === '/api/auth/logout') return logout(request, env)
   if (method === 'POST' && path === '/api/redemptions') return redeem(request, env)
   const resource = path.match(/^\/api\/courses\/([^/]+)\/resources$/)
+  const outline = path.match(/^\/api\/courses\/([^/]+)\/outline$/)
+  if (method === 'GET' && outline) return courseOutline(env, contentId(outline[1]))
+  const learning = path.match(/^\/api\/courses\/([^/]+)\/curriculum$/)
+  if (method === 'GET' && learning) return learningContent(request, env, contentId(learning[1]))
+  const image = path.match(/^\/api\/courses\/([^/]+)\/images\/([a-f0-9-]{36})$/)
+  if (method === 'GET' && image) return courseImage(request, env, contentId(image[1]), image[2])
+  const curriculum = path.match(/^\/api\/admin\/courses\/([^/]+)\/curriculum$/)
+  if (['GET', 'PUT'].includes(method) && curriculum) return adminCurriculum(request, env, contentId(curriculum[1]))
+  const upload = path.match(/^\/api\/admin\/courses\/([^/]+)\/images$/)
+  if (method === 'POST' && upload) return uploadCourseImage(request, env, contentId(upload[1]))
   if (method === 'GET' && resource) return resources(request, env, contentId(resource[1]))
   if (method === 'GET' && path === '/api/admin/content') return listContent(request, env)
   const content = path.match(/^\/api\/admin\/content\/([^/]+)\/([^/]+)$/)
@@ -46,10 +59,7 @@ async function dispatch(request: Request, env: Env): Promise<Response> {
   if (method === 'POST' && path === '/api/admin/redemption-codes') return createCode(request, env)
   const code = path.match(/^\/api\/admin\/redemption-codes\/([^/]+)\/revoke$/)
   if (method === 'POST' && code) return revokeCode(request, env, contentId(code[1]))
-  if (method === 'GET' && path === '/api/admin/orders') {
-    await requireUser(request, env, true)
-    return json({ items: (await env.DB.prepare('SELECT id, user_id AS userId, course_id AS courseId, amount_cents AS amountCents, note, created_at AS createdAt FROM manual_orders ORDER BY created_at DESC LIMIT 100').all()).results })
-  }
+  if (method === 'GET' && path === '/api/admin/orders') return listOrders(request, env)
   if (path.startsWith('/api/admin/')) {
     await requireUser(request, env, true)
   }

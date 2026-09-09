@@ -1,4 +1,4 @@
-import type { CourseResource, RedemptionCode, Student } from '../shared/types.ts'
+import type { CourseResource } from '../shared/types.ts'
 import { courseIds, requireUser } from './auth.ts'
 import { type Env, audit, body, expiry, fail, hash, integer, json, limit, now, randomToken, text } from './http.ts'
 
@@ -62,14 +62,6 @@ export async function adminResource(request: Request, env: Env, id: string) {
   if (!result[0].meta.changes) return fail(409, 'REVISION_CONFLICT')
   return json({ resource: { url: url.href, extractionCode, note, version: version + 1 } })
 }
-export async function listCodes(request: Request, env: Env) {
-  await requireUser(request, env, true)
-  const result = await env.DB.prepare(`SELECT id, hint, created_at AS createdAt, expires_at AS expiresAt,
-    redeemed_by AS redeemedBy, redeemed_at AS redeemedAt, revoked_at AS revokedAt,
-    (SELECT json_group_array(course_id) FROM code_courses WHERE code_id = r.id) AS courseIds
-    FROM redemption_codes r ORDER BY created_at DESC, id LIMIT 200`).all<Omit<RedemptionCode, 'courseIds'> & { courseIds: string }>()
-  return json({ items: result.results.map(row => ({ ...row, courseIds: JSON.parse(row.courseIds) })) })
-}
 export async function createCode(request: Request, env: Env) {
   const admin = await requireUser(request, env, true)
   await limit(env, `create-code:${admin.id}`, 60, 600)
@@ -101,15 +93,6 @@ export async function revokeCode(request: Request, env: Env, id: string) {
   ])
   if (!result[0].meta.changes) return fail(409, 'CODE_NOT_REVOCABLE')
   return json({ ok: true })
-}
-export async function listStudents(request: Request, env: Env) {
-  await requireUser(request, env, true)
-  const result = await env.DB.prepare(`SELECT u.id, u.display_name AS displayName, u.role,
-    (SELECT subject FROM auth_identities WHERE user_id = u.id LIMIT 1) AS identity,
-    (SELECT json_group_array(course_id) FROM entitlements WHERE user_id = u.id AND revoked_at IS NULL
-      AND (expires_at IS NULL OR expires_at > ?)) AS courseIds
-    FROM users u ORDER BY created_at DESC, u.id LIMIT 200`).bind(now()).all<Omit<Student, 'courseIds'> & { courseIds: string }>()
-  return json({ items: result.results.map(row => ({ ...row, courseIds: JSON.parse(row.courseIds) })) })
 }
 export async function manageEntitlement(request: Request, env: Env) {
   const admin = await requireUser(request, env, true)

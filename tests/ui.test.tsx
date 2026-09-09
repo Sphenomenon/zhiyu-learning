@@ -55,11 +55,11 @@ describe('account workflows', () => {
   it('does not show a Netdisk link when resource access is denied', async () => {
     const user = userEvent.setup()
     mockApi.mockImplementation(async path => {
-      if (path === '/me/courses') return { items: [courses[0]] }
+      if (path === '/me/courses') return { items: [{ ...courses[0], hasVideoArchive: true }] }
       throw new ApiError('COURSE_ACCESS_REQUIRED', 403)
     })
     render(<AccountView language="zh" session={{ ...student, courseIds: ['method'] }} onRefresh={vi.fn()} onAdmin={vi.fn()} />)
-    await user.click(await screen.findByRole('button', { name: '领取资料' }))
+    await user.click(await screen.findByRole('button', { name: '整课影片（旧版）' }))
     expect(await screen.findByRole('alert')).toBeTruthy()
     expect(screen.queryByRole('link', { name: '打开百度网盘' })).toBeNull()
   })

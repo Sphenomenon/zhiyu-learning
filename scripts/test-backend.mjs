@@ -6,12 +6,14 @@ import { createServer } from 'node:net'
 import { once } from 'node:events'
 import { setTimeout as delay } from 'node:timers/promises'
 import { prepareLocalDatabase, wrangler } from './db-local.mjs'
+import { prepareAdminListFixtures } from '../tests/admin-list-fixtures.mjs'
 
 const temporary = await mkdtemp(join(tmpdir(), 'zhiyu-api-test-'))
 let server
 let output = ''
 try {
   await prepareLocalDatabase(temporary)
+  await prepareAdminListFixtures(temporary)
   const socket = createServer()
   socket.listen(0, '127.0.0.1')
   await once(socket, 'listening')

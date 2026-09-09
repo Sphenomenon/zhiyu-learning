@@ -52,9 +52,12 @@ export function validateDocument(kind: ContentKind, id: string, value: unknown):
   return { ...storyText(data), id, published: true, ...(data.en ? { en: storyText(data.en) } : {}) }
 }
 export async function publicContent(env: Env, kind: ContentKind) {
-  const rows = await env.DB.prepare('SELECT published_json FROM content_entries WHERE kind = ? AND published_json IS NOT NULL ORDER BY id')
-    .bind(kind).all<{ published_json: string }>()
-  const items = rows.results.map(row => JSON.parse(row.published_json))
+  const rows = await env.DB.prepare(`SELECT c.published_json,
+    (SELECT SUM(json_array_length(chapter.value, '$.lessons')) FROM course_curricula l, json_each(l.published_json, '$.chapters') chapter
+      WHERE l.course_id = c.id AND c.kind = 'course') AS lesson_count
+    FROM content_entries c WHERE c.kind = ? AND c.published_json IS NOT NULL ORDER BY c.id`)
+    .bind(kind).all<{ published_json: string; lesson_count: number | null }>()
+  const items = rows.results.map(row => ({ ...JSON.parse(row.published_json), ...(row.lesson_count !== null ? { lessons: row.lesson_count } : {}) }))
   if (kind === 'course') items.sort((a, b) => a.index.localeCompare(b.index))
   return json(kind === 'site' ? { content: items[0] ?? null } : { items })
 }

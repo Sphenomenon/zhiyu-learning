@@ -7,16 +7,19 @@
 - Pages Functions + D1 本地运行、迁移、公开演示内容种子和前端代理。
 - 本机测试身份、单次验证码、请求限频、HttpOnly 会话、服务端管理员权限和退出撤销。生产登录默认关闭，不能把测试邮箱模式作为真实认证。
 - 一次性兑换码只存哈希；条件更新与数据库触发器原子开通课程，同账号重试不重复开通，也不能恢复已撤销的权限。
-- 私有网盘资料独立存放；查询校验当前权限，不返回到公开课程对象，不缓存，记录领取时间与资料版本。
+- 私有章节使用 `course_curricula` 保存草稿、发布快照与版本；公开接口只返回目录，正文与每小节可选视频仅对有课程权限的会话返回。
+- 小节插图上传接入 `COURSE_IMAGES` 私有 R2，限制格式与大小；发布前仅管理员预览，发布后学员按课程权限读取。
+- 旧版整课私有网盘资料独立存放；查询校验当前权限，不返回到公开课程对象，不缓存，记录领取时间与资料版本。
 - 首页/讲师、课程、案例的双语编辑、草稿/发布/下架、乐观版本检查。前端不再读取 localStorage 作为业务数据。
 - 人工权限调整、审计记录、人工确认收款与防重复提交；尚未对接支付平台。
+- 学员、密钥和收款记录的服务端搜索分页，学员角色/密钥状态筛选，配套列表索引及手机后台两行导航。
 - 构建、真实本地 Workers + D1 集成测试，以及 DOM 表单测试。详细运行步骤及剩余边界见 [本地开发说明](local-development.md)。
 
-目前的内容存储统一使用 `content_entries` 的 `kind`、`draft_json`、`published_json` 和 `revision`，而不是下文长期数据设计中的独立翻译表。`courses` 提供稳定课程 ID 和外键关联。现有身份适配只处理 `local` 测试身份；微信 AppID 范围与身份绑定冲突将在正式供应商接入时补充，不视为已实现。
+目前的公开内容存储使用 `content_entries` 的 `kind`、`draft_json`、`published_json` 和 `revision`，而不是下文长期数据设计中的独立翻译表。`courses` 提供稳定课程 ID 和外键关联。现有身份适配只处理 `local` 测试身份；微信 AppID 范围与身份绑定冲突将在正式供应商接入时补充，不视为已实现。
 
 ## 部署与成本
 
-建议沿用 Cloudflare Pages 前台，使用 TypeScript 编写 Pages Functions `/api/*`，连接 D1 数据库。后台图片需要上传时再接入 R2；付费课程视频继续放在百度网盘。
+建议沿用 Cloudflare Pages 前台，使用 TypeScript 编写 Pages Functions `/api/*`，连接 D1 数据库。小节图片已接入 R2，正式部署需创建私有桶并绑定 `COURSE_IMAGES`；视频仅在需要的小节附百度网盘链接。
 
 Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers 环境，不是常驻 Node.js 服务器。服务端业务采用标准 Request/Response、Web Crypto 和明确的数据库边界，方便将来迁移到大陆 Node.js 服务。短信供应商若只有 Node SDK，需要验证运行时兼容性；优先调用其正式 HTTPS API。
 
@@ -33,6 +36,8 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | sessions | 随机会话令牌的哈希、有效期、撤销状态；浏览器使用 HttpOnly、Secure Cookie |
 | verification_challenges | 验证目的、过期时间、尝试次数和使用状态；供应商代核验时不保存明文验证码 |
 | courses / course_translations | 课程结构、封面、排序、发布状态、中文/英文内容；价格如启用使用整数分 |
+| course_curricula | 课程下章节与小节的结构化 JSON，段落/标题/图片、每节可选影片、草稿与发布版、乐观版本检查 |
+| COURSE_IMAGES (R2) | 按课程 ID/随机图片 ID 存储，仅通过受控 API 读取，不开放桶公网访问 |
 | course_resources | 私有网盘 URL、提取码、资源版本；不混入公开课程对象 |
 | entitlements | 用户、课程、有效期、来源、撤销状态；唯一用户课程组合或等价约束 |
 | redemption_codes / code_courses | 高熵随机码的哈希、关联课程、有效期、兑换人、兑换时间 |
@@ -52,8 +57,13 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | 账号绑定 | POST /api/me/identities/* | 已登录并验证新身份；敏感操作重新验证 |
 | 已购课程 | GET /api/me/courses | 当前用户 |
 | 兑换 | POST /api/redemptions | 已登录；原子核销和开通 |
-| 课程资料 | GET /api/courses/:id/resources | 有效会话与课程权限；Cache-Control: no-store |
-| 内容管理 | /api/admin/site、/courses、/cases | 管理员；区分草稿保存与发布 |
+| 课程目录 | GET /api/courses/:id/outline | 公开，仅已发布标题与小节编号，不含正文或链接 |
+| 课程阅读 | GET /api/courses/:id/curriculum | 有效会话及课程权限，仅发布版 |
+| 插图读取 | GET /api/courses/:id/images/:imageId | 管理员或有课程权限且图片在发布版中的学员 |
+| 章节管理 | GET/PUT /api/admin/courses/:id/curriculum | 管理员，草稿/发布/暂停发布与并发版本检查 |
+| 插图上传 | POST /api/admin/courses/:id/images | 管理员，原始图片请求体，JPG/PNG/WebP，最多 5 MiB |
+| 旧版整课资料 | GET /api/courses/:id/resources | 有效会话与课程权限；Cache-Control: no-store |
+| 内容管理 | GET /api/admin/content；PUT /api/admin/content/:kind/:id | 管理员；区分草稿保存与发布 |
 | 权限管理 | /api/admin/entitlements、/redemption-codes | 管理员；审计记录 |
 | 自动支付（后续） | /api/orders、/api/payments/:provider/notify | 订单归属检查，回调验签 |
 
