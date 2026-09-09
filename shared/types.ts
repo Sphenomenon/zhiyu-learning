@@ -56,7 +56,8 @@ export type User = { id: string; displayName: string; role: 'student' | 'admin' 
 export type SessionState = {
   user: User | null
   courseIds: string[]
-  authMode: 'local' | 'unavailable'
+  authMode: 'local' | 'wechat' | 'unavailable'
+  wechat?: { linked: boolean }
 }
 export type CourseResource = { url: string; extractionCode: string; note: string; version: number }
 export type Student = User & { identity: string; courseIds: string[] }

@@ -1,4 +1,14 @@
-export type Env = { DB: D1Database; COURSE_IMAGES?: R2Bucket; AUTH_MODE?: string; LOCAL_ADMIN_EMAIL?: string }
+export type Env = {
+  DB: D1Database
+  COURSE_IMAGES?: R2Bucket
+  AUTH_MODE?: string
+  LOCAL_ADMIN_EMAIL?: string
+  WECHAT_APP_ID?: string
+  WECHAT_APP_SECRET?: string
+  WECHAT_SERVER_URL?: string
+  WECHAT_WEBHOOK_TOKEN?: string
+  WECHAT_ENCODING_AES_KEY?: string
+}
 
 export class ApiError extends Error {
   status: number
@@ -25,7 +35,7 @@ export function json(data: unknown, status = 200, extra?: HeadersInit) {
   headers.set('Vary', 'Cookie')
   return new Response(JSON.stringify(data), { status, headers })
 }
-export async function readBytes(request: Request, maximum: number) {
+export async function readBytes(request: Pick<Request, 'body'>, maximum: number) {
   // Bound the actual stream, not just the untrusted Content-Length header.
   const reader = request.body?.getReader()
   if (!reader) return fail(400, 'INVALID_INPUT')

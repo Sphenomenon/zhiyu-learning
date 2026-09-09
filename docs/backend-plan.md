@@ -1,11 +1,12 @@
 # 后端方案与实施进度
 
-状态：2026-09-09 已完成第一版本地联调后端，尚未新增远端数据库、短信账号或支付渠道，也未更新线上部署。正式登录和经营主体仍需确定。
+状态：2026-09-09 已完成本地联调后端，微信公众号登录采用临时参数二维码与安全模式事件回调。尚未新增远端数据库、短信账号或支付渠道，也未更新线上部署。用户当前公众号是订阅号或未认证账号，计划以后准备有参数二维码接口权限的账号，尚无正式域名；真实扫码需认证服务号、HTTPS 消息回调、密钥和云端资源配置，经营主体仍需确定。
 
 ## 本轮已实现
 
 - Pages Functions + D1 本地运行、迁移、公开演示内容种子和前端代理。
 - 本机测试身份、单次验证码、请求限频、HttpOnly 会话、服务端管理员权限和退出撤销。生产登录默认关闭，不能把测试邮箱模式作为真实认证。
+- 网站展示公众号临时参数二维码，微信 `subscribe` / `SCAN` 安全模式事件确认 OpenID，原浏览器领取会话；支持已有账号明确绑定。身份按 AppID + OpenID 唯一识别，冲突不合并课程，新账号始终为学员。配置与首次管理员初始化见 [微信公众号登录](wechat-login.md)。
 - 一次性兑换码只存哈希；条件更新与数据库触发器原子开通课程，同账号重试不重复开通，也不能恢复已撤销的权限。
 - 私有章节使用 `course_curricula` 保存草稿、发布快照与版本；公开接口只返回目录，正文与每小节可选视频仅对有课程权限的会话返回。
 - 小节插图上传接入 `COURSE_IMAGES` 私有 R2，限制格式与大小；发布前仅管理员预览，发布后学员按课程权限读取。
@@ -15,7 +16,7 @@
 - 学员、密钥和收款记录的服务端搜索分页，学员角色/密钥状态筛选，配套列表索引及手机后台两行导航。
 - 构建、真实本地 Workers + D1 集成测试，以及 DOM 表单测试。详细运行步骤及剩余边界见 [本地开发说明](local-development.md)。
 
-目前的公开内容存储使用 `content_entries` 的 `kind`、`draft_json`、`published_json` 和 `revision`，而不是下文长期数据设计中的独立翻译表。`courses` 提供稳定课程 ID 和外键关联。现有身份适配只处理 `local` 测试身份；微信 AppID 范围与身份绑定冲突将在正式供应商接入时补充，不视为已实现。
+目前的公开内容存储使用 `content_entries` 的 `kind`、`draft_json`、`published_json` 和 `revision`，而不是下文长期数据设计中的独立翻译表。`courses` 提供稳定课程 ID 和外键关联。身份适配支持仅限本机的 `local` 和需正式配置的 `wechat`；`0005_wechat_login.sql` 补充二维码挑战、短期接口凭证缓存与微信身份所需状态。短信、账号找回和自助合并尚未实现。
 
 ## 部署与成本
 
@@ -32,9 +33,11 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | 数据 | 用途与约束 |
 | --- | --- |
 | users | 内部稳定 user_id、显示名、状态、角色；首次注册不能自行指定管理员 |
-| auth_identities | user_id、provider、provider_app_id、provider_subject，组合唯一；手机号、邮箱、微信分别绑定 |
+| auth_identities | user_id、provider、subject；微信 subject 为 AppID:OpenID，身份只能归属一个账号，同账号同 AppID 只绑定一个微信 |
 | sessions | 随机会话令牌的哈希、有效期、撤销状态；浏览器使用 HttpOnly、Secure Cookie |
 | verification_challenges | 验证目的、过期时间、尝试次数和使用状态；供应商代核验时不保存明文验证码 |
+| wechat_qr_logins | 原浏览器、场景与 ticket 的哈希、登录/绑定意图、有效期、扫码与消费状态；回调不直接发站内会话 |
+| wechat_api_tokens | 仅服务端使用的短期微信接口 access_token 缓存；不返回客户端，数据库导出不得公开 |
 | courses / course_translations | 课程结构、封面、排序、发布状态、中文/英文内容；价格如启用使用整数分 |
 | course_curricula | 课程下章节与小节的结构化 JSON，段落/标题/图片、每节可选影片、草稿与发布版、乐观版本检查 |
 | COURSE_IMAGES (R2) | 按课程 ID/随机图片 ID 存储，仅通过受控 API 读取，不开放桶公网访问 |
@@ -45,7 +48,7 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | site_content / case_studies | 草稿与已发布版本、语言、排序；公开接口只返回发布版 |
 | audit_logs / resource_access_logs | 管理员改动与资料领取记录；不记录验证码、私有链接或会话明文 |
 
-验证码登录、微信身份和订单都关联内部 user_id。换手机号、绑定微信或昵称变化不能改变课程归属。微信 OpenID 按 AppID 区分，UnionID 仅在满足平台条件时用于同一开放平台下的身份关联，不能假设始终存在。
+验证码登录、微信身份和订单都关联内部 user_id。换手机号、绑定微信或昵称变化不能改变课程归属。微信 OpenID 按 AppID 区分；本轮不读取昵称、头像或手机号，不使用 UnionID 自动合并账号。UnionID 的跨应用关联如将来需要，应另行设计并核实平台条件。
 
 ## 拟定 API
 
@@ -53,8 +56,9 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | --- | --- | --- |
 | 公开内容 | GET /api/site、/api/courses、/api/cases | 公开，仅发布版 |
 | 验证码 | POST /api/auth/code/request、/api/auth/code/verify | 服务端限频；核验后建立会话 |
+| 微信扫码 | POST /api/auth/wechat/qr/start、/api/auth/wechat/qr/poll；GET/POST /api/auth/wechat/events | 同源生成二维码；回调验签解密；原浏览器领取会话，绑定还要求原账号会话 |
 | 账号 | GET /api/me；POST /api/auth/logout | 当前会话 |
-| 账号绑定 | POST /api/me/identities/* | 已登录并验证新身份；敏感操作重新验证 |
+| 其他账号绑定（后续） | POST /api/me/identities/* | 已登录并验证新身份；敏感操作重新验证 |
 | 已购课程 | GET /api/me/courses | 当前用户 |
 | 兑换 | POST /api/redemptions | 已登录；原子核销和开通 |
 | 课程目录 | GET /api/courses/:id/outline | 公开，仅已发布标题与小节编号，不含正文或链接 |
@@ -67,7 +71,7 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | 权限管理 | /api/admin/entitlements、/redemption-codes | 管理员；审计记录 |
 | 自动支付（后续） | /api/orders、/api/payments/:provider/notify | 订单归属检查，回调验签 |
 
-最终路由及字段将在选择身份供应商后固化。API 不直接信任前端发送的角色、价格、购买成功标识或解锁列表。
+当前微信路由见 [接入说明](wechat-login.md)，标记“后续”的接口仍为规划。API 不直接信任前端发送的角色、价格、购买成功标识或解锁列表。
 
 ## 实施顺序
 
@@ -92,9 +96,9 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 | 事项 | 何时需要 | 运营者负责 |
 | --- | --- | --- |
 | GitHub 登录 | 创建公开仓库 | 登录账号、完成平台要求的验证码或双重验证 |
-| 登录服务 | 选择供应商后 | 实名认证、开通服务、确认签名方案、充值及预算；API 密钥通过安全配置录入 |
+| 登录服务 | 当前微信上线前；短信如以后启用 | 核实公众号参数二维码接口权限，通过安全配置录入密钥；短信另需开通、签名方案与预算 |
 | 独立域名 | 正式品牌上线及部分平台审核前 | 购买/持有域名、实名认证，确认最终归属 |
-| 微信接入 | 要启用微信登录或绑定时 | 主体/应用申请、材料提交、平台认证；开发者配置回调与服务端密钥 |
+| 微信接入 | 当前上线前 | 准备有参数二维码接口权限的认证服务号；配置正式 HTTPS 消息回调、AppID 及三个加密 Secret，核对原消息功能并做真机扫码验收 |
 | 支付 | 要站内自动收款时 | 支付商户申请、经营材料和本人/企业结算账户 |
 | 备案与经营类目 | 选择大陆接入及正式经营前 | 根据主体、实际业务与接入商要求办理。个人备案不能默认用于经营性知识付费业务；有需要时核实许可/前置审批 |
 | 数据与素材 | 对外正式销售前 | 提供真实课程、定价、联系信息、合法使用的素材、退款规则和案例展示授权 |

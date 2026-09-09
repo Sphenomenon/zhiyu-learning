@@ -4,12 +4,16 @@ import { listCodes, listOrders, listStudents } from './admin-lists.ts'
 import { contentId, contentKind, listContent, publicContent, saveContent } from './content.ts'
 import { adminCurriculum, courseImage, courseOutline, learningContent, uploadCourseImage } from './curriculum.ts'
 import { ApiError, type Env, checkOrigin, fail, json, now } from './http.ts'
+import { startWechatQr, pollWechatQr, wechatEvents } from './wechat.ts'
 
 async function dispatch(request: Request, env: Env): Promise<Response> {
-  checkOrigin(request)
   const path = new URL(request.url).pathname.replace(/\/$/, '')
   const method = request.method
   if (!env.DB) return fail(503, 'DATABASE_NOT_CONFIGURED')
+  // This exact server callback authenticates encrypted messages instead of a
+  // browser Origin. All browser mutations still require the usual CSRF check.
+  if (['GET', 'POST'].includes(method) && path === '/api/auth/wechat/events') return wechatEvents(request, env)
+  checkOrigin(request)
   if (method === 'GET' && path === '/api/health') {
     await env.DB.prepare('SELECT 1 FROM users LIMIT 1').all()
     return json({ ok: true })
@@ -33,6 +37,8 @@ async function dispatch(request: Request, env: Env): Promise<Response> {
     }), hasVideoArchive: Boolean(row.has_video_archive) })) })
   }
   if (method === 'POST' && path === '/api/auth/code/request') return requestCode(request, env)
+  if (method === 'POST' && path === '/api/auth/wechat/qr/start') return startWechatQr(request, env)
+  if (method === 'POST' && path === '/api/auth/wechat/qr/poll') return pollWechatQr(request, env)
   if (method === 'POST' && path === '/api/auth/code/verify') return verifyCode(request, env)
   if (method === 'POST' && path === '/api/auth/logout') return logout(request, env)
   if (method === 'POST' && path === '/api/redemptions') return redeem(request, env)

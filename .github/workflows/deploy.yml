@@ -55,5 +55,8 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_D1_DATABASE_ID: ${{ vars.CLOUDFLARE_D1_DATABASE_ID }}
           CLOUDFLARE_R2_BUCKET: ${{ vars.CLOUDFLARE_R2_BUCKET }}
+          AUTH_MODE: ${{ vars.AUTH_MODE }}
+          WECHAT_APP_ID: ${{ vars.WECHAT_APP_ID }}
+          WECHAT_SERVER_URL: ${{ vars.WECHAT_SERVER_URL }}
           SEED_PUBLIC_DEMO: ${{ inputs.seed_public_demo }}
         run: node scripts/deploy-cloudflare.mjs

@@ -32,7 +32,7 @@ try {
     await delay(200)
   }
   if (!ready) throw new Error(`Local runtime did not start: ${output}`)
-  const tests = spawn(process.execPath, ['--test', 'tests/backend.test.mjs', 'tests/local-auth.test.mjs'], { stdio: 'inherit', env: { ...process.env, TEST_API_BASE: base } })
+  const tests = spawn(process.execPath, ['--test', 'tests/backend.test.mjs', 'tests/local-auth.test.mjs', 'tests/wechat-auth.test.mjs'], { stdio: 'inherit', env: { ...process.env, TEST_API_BASE: base } })
   const [code] = await once(tests, 'exit')
   if (code !== 0) { console.error(output); process.exitCode = code || 1 }
 } finally {

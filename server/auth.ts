@@ -1,13 +1,14 @@
 import type { User } from '../shared/types.ts'
 import { type Env, body, fail, hash, json, limit, localAuth, now, randomToken, text } from './http.ts'
+import { wechatConfig } from './wechat-config.ts'
 
 function cookieName(request: Request) {
   return new URL(request.url).protocol === 'https:' ? '__Host-zhiyu_session' : 'zhiyu_session'
 }
-function cookie(request: Request, token: string, age: number) {
+export function sessionCookie(request: Request, token: string, age: number) {
   return `${cookieName(request)}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${age}${new URL(request.url).protocol === 'https:' ? '; Secure' : ''}`
 }
-async function tokenHash(request: Request) {
+export async function tokenHash(request: Request) {
   const raw = request.headers.get('cookie')?.split(';').map(s => s.trim()).find(s => s.startsWith(`${cookieName(request)}=`))?.split('=')[1]
   return raw && /^[a-f0-9]{64}$/.test(raw) ? hash(raw) : null
 }
@@ -32,7 +33,13 @@ export async function courseIds(env: Env, userId: string) {
 }
 export async function sessionState(request: Request, env: Env) {
   const user = await currentUser(request, env)
-  return json({ user, courseIds: user ? await courseIds(env, user.id) : [], authMode: localAuth(request, env) ? 'local' : 'unavailable' })
+  const config = wechatConfig(request, env)
+  const linked = config && user ? Boolean(await env.DB.prepare(`SELECT 1 FROM auth_identities
+    WHERE provider = 'wechat' AND user_id = ? AND subject LIKE ?`).bind(user.id, `${config.appId}:%`).first()) : false
+  return json({ user, courseIds: user ? await courseIds(env, user.id) : [],
+    authMode: config ? 'wechat' : localAuth(request, env) ? 'local' : 'unavailable',
+    ...(config ? { wechat: { linked } } : {}),
+  })
 }
 export async function requestCode(request: Request, env: Env) {
   if (!localAuth(request, env)) return fail(503, 'AUTH_NOT_CONFIGURED')
@@ -91,10 +98,10 @@ export async function verifyCode(request: Request, env: Env) {
   ])
   const session = await env.DB.prepare('SELECT user_id FROM sessions WHERE token_hash = ?').bind(tokenDigest).first()
   if (!session) return fail(403, 'ACCOUNT_DISABLED')
-  return json({ ok: true }, 200, { 'Set-Cookie': cookie(request, token, age) })
+  return json({ ok: true }, 200, { 'Set-Cookie': sessionCookie(request, token, age) })
 }
 export async function logout(request: Request, env: Env) {
   const digest = await tokenHash(request)
   if (digest) await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(digest).run()
-  return json({ ok: true }, 200, { 'Set-Cookie': cookie(request, '', 0) })
+  return json({ ok: true }, 200, { 'Set-Cookie': sessionCookie(request, '', 0) })
 }

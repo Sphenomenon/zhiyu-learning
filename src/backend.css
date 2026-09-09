@@ -21,6 +21,17 @@ body:has(.bz-admin) { min-width: 0; }
 .bz-login-panel { max-width: 640px; margin: 20px auto; }
 .bz-login-panel h1 { margin: 18px 0; font-family: var(--font-display); }
 .bz-login-panel > p, .bz-live-account .bz-panel > p, .bz-padded-card > p { color: var(--bz-muted); line-height: 1.9; font-size: 14px; }
+.bz-wechat-entry { display: grid; gap: 16px; margin-block: 20px; }
+.bz-wechat-entry > p, .bz-wechat-qr > p { margin: 0; color: var(--bz-muted); font-size: 14px; line-height: 1.9; }
+.bz-wechat-entry > button { justify-self: start; }
+.bz-wechat-entry button:disabled { opacity: .55; cursor: wait; }
+.bz-wechat-entry > .bz-notice { margin: 0; }
+.bz-wechat-qr { display: grid; justify-items: center; gap: 14px; max-width: 360px; margin: 0; padding: 20px; border: 1px solid var(--bz-line); border-radius: 14px; background: var(--bz-bg); }
+.bz-wechat-qr img { display: block; width: 240px; max-width: 100%; height: auto; aspect-ratio: 1; padding: 10px; border-radius: 6px; background: #fff; }
+.bz-wechat-qr figcaption { font-size: 14px; font-weight: 600; color: var(--bz-text); text-align: center; }
+.bz-wechat-qr > p { font-size: 12px; text-align: center; }
+.bz-wechat-status { display: flex; align-items: center; gap: 9px; }
+.bz-wechat-status svg { flex: 0 0 20px; width: 20px; }
 .bz-live-account { max-width: 1060px; }
 .bz-live-account .bz-panel { margin-top: 22px; }
 .bz-live-account .bz-welcome { display: block; }

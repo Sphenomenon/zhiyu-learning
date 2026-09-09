@@ -40,3 +40,5 @@ exports/
 playwright-report/
 test-results/
 screenshots/
+.playwright-cli/
+output/playwright/
