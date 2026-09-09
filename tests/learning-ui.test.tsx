@@ -72,7 +72,7 @@ describe('lesson authoring', () => {
   it('uploads an image to the selected block and keeps it in the chapter draft', async () => {
     const user = userEvent.setup()
     const uploaded = '/api/courses/method/images/00000000-0000-4000-8000-000000000000'
-    mockApi.mockImplementation(async (path, options) => path.endsWith('/images') ? { url: uploaded } : options?.data ? { item: { ...initial, draft: (options.data as { draft: Curriculum }).draft, revision: 2 } } : { item: initial })
+    mockApi.mockImplementation(async (path, options) => path.endsWith('/images') ? { url: uploaded } : options?.data ? { item: { ...initial, draft: (options.data as { draft: Curriculum }).draft, revision: 2 } } : { item: initial, imageUploadEnabled: true })
     editor()
     const file = new File(['fixture'], 'lesson.png', { type: 'image/png' })
     await user.upload(await screen.findByLabelText('从设备上传图片'), file)
@@ -81,6 +81,20 @@ describe('lesson authoring', () => {
     await user.click(screen.getByRole('button', { name: '保存章节草稿' }))
     await screen.findByText('章节草稿已保存，学员内容未改变。')
     expect((mockApi.mock.lastCall![1]!.data as { draft: Curriculum }).draft.chapters[0].lessons[0].blocks[1]).toMatchObject({ url: uploaded })
+  })
+  it('edits and previews image URLs without offering uploads when storage is disabled', async () => {
+    const user = userEvent.setup()
+    editMock(); editor()
+    const imageInput = await screen.findByLabelText('图片地址')
+    expect(screen.queryByLabelText('从设备上传图片')).toBeNull()
+    await user.clear(imageInput)
+    await user.type(imageInput, 'https://example.com/lesson.png')
+    await user.click(screen.getByRole('button', { name: '预览本节' }))
+    expect(screen.getByAltText('练习示意图').getAttribute('src')).toBe('https://example.com/lesson.png')
+    await user.click(screen.getByRole('button', { name: '保存章节草稿' }))
+    await screen.findByText('章节草稿已保存，学员内容未改变。')
+    expect((mockApi.mock.lastCall![1]!.data as { draft: Curriculum }).draft.chapters[0].lessons[0].blocks[1]).toMatchObject({ url: 'https://example.com/lesson.png' })
+    expect(mockApi.mock.calls.some(([path]) => path.endsWith('/images'))).toBe(false)
   })
   it('keeps edits on revision conflict and asks before discarding them', async () => {
     const user = userEvent.setup()

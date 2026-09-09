@@ -76,7 +76,7 @@ export async function adminCurriculum(request: Request, env: Env, id: string) {
   const select = () => env.DB.prepare('SELECT * FROM course_curricula WHERE course_id = ?').bind(id)
   if (request.method === 'GET') {
     const row = await select().first<CurriculumRow>()
-    return json({ item: row ? decode(row) : { courseId: id, draft: { chapters: [] }, published: null, revision: 0, updatedAt: 0 } })
+    return json({ item: row ? decode(row) : { courseId: id, draft: { chapters: [] }, published: null, revision: 0, updatedAt: 0 }, imageUploadEnabled: Boolean(env.COURSE_IMAGES) })
   }
   const input = await body(request, 1_000_000)
   const revision = integer(input.revision, 0, Number.MAX_SAFE_INTEGER - 1)
@@ -104,7 +104,7 @@ export async function adminCurriculum(request: Request, env: Env, id: string) {
     ])
     if (!result[0].meta.changes) return fail(409, 'REVISION_CONFLICT')
   }
-  return json({ item: decode(result[2].results[0] as CurriculumRow) })
+  return json({ item: decode(result[2].results[0] as CurriculumRow), imageUploadEnabled: Boolean(env.COURSE_IMAGES) })
 }
 function courseSummary(id: string, value: string | null) {
   const course = value ? JSON.parse(value) as Course : null

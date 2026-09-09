@@ -8,10 +8,10 @@ export const projectName = 'zhiyu-learning'
 export function deploymentConfig(environment) {
   const account = environment.CLOUDFLARE_ACCOUNT_ID || ''
   const database = environment.CLOUDFLARE_D1_DATABASE_ID || ''
-  const bucket = environment.CLOUDFLARE_R2_BUCKET || 'zhiyu-course-images'
+  const bucket = environment.CLOUDFLARE_R2_BUCKET || ''
   if (!/^[a-f0-9]{32}$/i.test(account)) throw new Error('Set CLOUDFLARE_ACCOUNT_ID in GitHub Actions variables.')
   if (!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(database) || /^0{8}-0{4}-0{4}-0{4}-0{12}$/.test(database)) throw new Error('Set the real production CLOUDFLARE_D1_DATABASE_ID; local placeholders are not deployable.')
-  if (!/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(bucket)) throw new Error('Invalid CLOUDFLARE_R2_BUCKET.')
+  if (bucket && !/^[a-z0-9][a-z0-9-]{1,61}[a-z0-9]$/.test(bucket)) throw new Error('Invalid CLOUDFLARE_R2_BUCKET.')
   const authMode = environment.AUTH_MODE || 'disabled'
   if (!['disabled', 'wechat'].includes(authMode)) throw new Error('Production AUTH_MODE must be disabled or wechat; local test login cannot be deployed.')
   const vars = { AUTH_MODE: authMode }
@@ -30,7 +30,7 @@ export function deploymentConfig(environment) {
     // AppSecret is a separate encrypted Pages secret, never a plaintext var.
     vars,
     d1_databases: [{ binding: 'DB', database_id: database, migrations_dir: 'migrations' }],
-    r2_buckets: [{ binding: 'COURSE_IMAGES', bucket_name: bucket }],
+    r2_buckets: bucket ? [{ binding: 'COURSE_IMAGES', bucket_name: bucket }] : [],
   }
 }
 export function checkProject(project, config) {
@@ -39,7 +39,7 @@ export function checkProject(project, config) {
   const database = production.d1_databases?.DB?.id
   const bucket = production.r2_buckets?.COURSE_IMAGES?.name
   if (database && database !== config.d1_databases[0].database_id) throw new Error('Refusing to replace the existing production DB binding.')
-  if (bucket && bucket !== config.r2_buckets[0].bucket_name) throw new Error('Refusing to replace the existing production image bucket.')
+  if (bucket && bucket !== config.r2_buckets[0]?.bucket_name) throw new Error('Refusing to replace or remove the existing production image bucket.')
   const existing = production.env_vars || {}
   if (existing.AUTH_MODE?.value && existing.AUTH_MODE.value !== 'disabled' && existing.AUTH_MODE.value !== config.vars.AUTH_MODE) throw new Error('Production authentication differs from this release; review it before deploying.')
   if (config.vars.AUTH_MODE === 'wechat') {
@@ -69,7 +69,7 @@ async function deploy() {
   const project = await cloudflare(`/pages/projects/${projectName}`)
   checkProject(project, config)
   await cloudflare(`/d1/database/${config.d1_databases[0].database_id}`)
-  await cloudflare(`/r2/buckets/${config.r2_buckets[0].bucket_name}`)
+  if (config.r2_buckets.length) await cloudflare(`/r2/buckets/${config.r2_buckets[0].bucket_name}`)
   const original = await readFile('wrangler.jsonc', 'utf8')
   const temporary = await mkdtemp(join(tmpdir(), 'zhiyu-deploy-'))
   try {

@@ -38,6 +38,16 @@ test('WeChat deployment requires a production callback and preserves the secret 
   project.deployment_configs.production.env_vars.WECHAT_APP_ID = { value: 'wx0000000000000000' }
   assert.throws(() => checkProject(project, config))
 })
+test('image storage is optional and binds only an explicitly configured bucket', () => {
+  assert.deepEqual(deploymentConfig(environment).r2_buckets, [])
+  assert.deepEqual(deploymentConfig({ ...environment, CLOUDFLARE_R2_BUCKET: '' }).r2_buckets, [])
+  const config = deploymentConfig({ ...environment, CLOUDFLARE_R2_BUCKET: 'private-images' })
+  assert.deepEqual(config.r2_buckets, [{ binding: 'COURSE_IMAGES', bucket_name: 'private-images' }])
+  assert.throws(() => deploymentConfig({ ...environment, CLOUDFLARE_R2_BUCKET: 'invalid bucket' }))
+  const project = { name: 'zhiyu-learning', production_branch: 'main', deployment_configs: { production: { r2_buckets: { COURSE_IMAGES: { name: 'private-images' } } } } }
+  assert.doesNotThrow(() => checkProject(project, config))
+  assert.throws(() => checkProject(project, deploymentConfig(environment)), /replace or remove/)
+})
 test('deployment preflight refuses another project, branch or existing production database', () => {
   const config = deploymentConfig(environment)
   const project = { name: 'zhiyu-learning', production_branch: 'main' }

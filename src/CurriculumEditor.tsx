@@ -31,24 +31,28 @@ function OrderButtons({ index, count, label, language, onMove, onRemove }: { ind
 
 export function CurriculumEditor({ courseId, courseTitle, language, onClose, onPublicChange }: { courseId: string; courseTitle: string; language: Language; onClose: () => void; onPublicChange?: () => void }) {
   const [entry, setEntry] = useState<CurriculumEntry | null>(null)
+  const [imageUploadEnabled, setImageUploadEnabled] = useState(false)
   const [error, setError] = useState<unknown>(null)
   const [reload, setReload] = useState(0)
   const closeHandler = useRef(onClose)
   useEffect(() => {
     const controller = new AbortController()
     setError(null)
-    api<{ item: CurriculumEntry }>(`/admin/courses/${courseId}/curriculum`, { signal: controller.signal }).then(result => setEntry(result.item)).catch(error => { if (!controller.signal.aborted) setError(error) })
+    api<{ item: CurriculumEntry; imageUploadEnabled: boolean }>(`/admin/courses/${courseId}/curriculum`, { signal: controller.signal }).then(result => {
+      setEntry(result.item)
+      setImageUploadEnabled(result.imageUploadEnabled === true)
+    }).catch(error => { if (!controller.signal.aborted) setError(error) })
     return () => controller.abort()
   }, [courseId, reload])
   return <Modal title={tx(language, '章节与小节', 'Chapters & lessons')} language={language} className="bz-curriculum-dialog" onClose={() => closeHandler.current()}>
     <p>{courseTitle}</p>
     {Boolean(error) && <Notice error>{errorMessage(error, language)}<button className="bz-secondary" onClick={() => setReload(value => value + 1)}>{tx(language, '重试', 'Retry')}</button></Notice>}
     {!entry && !error && <p role="status">{tx(language, '正在读取章节…', 'Loading chapters…')}</p>}
-    {entry && <CurriculumForm entry={entry} language={language} closeHandler={closeHandler} onClose={onClose} onPublicChange={onPublicChange} />}
+    {entry && <CurriculumForm entry={entry} imageUploadEnabled={imageUploadEnabled} language={language} closeHandler={closeHandler} onClose={onClose} onPublicChange={onPublicChange} />}
   </Modal>
 }
 
-function CurriculumForm({ entry, language, closeHandler, onClose, onPublicChange }: { entry: CurriculumEntry; language: Language; closeHandler: React.RefObject<() => void>; onClose: () => void; onPublicChange?: () => void }) {
+function CurriculumForm({ entry, imageUploadEnabled, language, closeHandler, onClose, onPublicChange }: { entry: CurriculumEntry; imageUploadEnabled: boolean; language: Language; closeHandler: React.RefObject<() => void>; onClose: () => void; onPublicChange?: () => void }) {
   const [draft, setDraft] = useState<Curriculum>(entry.draft)
   const [revision, setRevision] = useState(entry.revision)
   const [baseline, setBaseline] = useState(JSON.stringify(entry.draft))
@@ -146,8 +150,10 @@ function CurriculumForm({ entry, language, closeHandler, onClose, onPublicChange
                 {block.type === 'image' ? <>
                   {block.url && <img className="bz-block-image" src={block.url} alt={block.caption} referrerPolicy="no-referrer" />}
                   <label>{tx(language, '图片地址', 'Image URL')}<input maxLength={2000} value={block.url} onChange={event => updateBlock(block.id, { url: event.target.value })} placeholder="https://…" /></label>
-                  <label className="bz-upload-label"><span><Upload />{tx(language, '从设备上传图片', 'Upload an image')}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(block.id, file) }} /></label>
-                  <small>{tx(language, 'JPG、PNG、WebP，单张最多 5 MB。上传的插图仅供本课程学员阅读。', 'JPG, PNG or WebP, up to 5 MB each. Uploaded images are available only to enrolled learners.')}</small>
+                  {imageUploadEnabled ? <>
+                    <label className="bz-upload-label"><span><Upload />{tx(language, '从设备上传图片', 'Upload an image')}</span><input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) void upload(block.id, file) }} /></label>
+                    <small>{tx(language, 'JPG、PNG、WebP，单张最多 5 MB。上传的插图仅供本课程学员阅读。', 'JPG, PNG or WebP, up to 5 MB each. Uploaded images are available only to enrolled learners.')}</small>
+                  </> : <small>{tx(language, '请填写已有图片的 HTTPS 地址或本站图片路径。', 'Enter an existing HTTPS image URL or a site image path.')}</small>}
                   <label>{tx(language, '图片说明', 'Image caption')}<input maxLength={500} value={(translated ? block.captionEn : block.caption) || ''} onChange={event => updateBlock(block.id, { [translated ? 'captionEn' : 'caption']: event.target.value })} /></label>
                 </> : <label>{tx(language, block.type === 'heading' ? '标题文字' : '段落文字', block.type === 'heading' ? 'Heading text' : 'Paragraph text')}<textarea rows={block.type === 'heading' ? 2 : 6} maxLength={block.type === 'heading' ? 240 : 12000} value={(translated ? block.textEn : block.text) || ''} onChange={event => updateBlock(block.id, { [translated ? 'textEn' : 'text']: event.target.value })} /></label>}
               </div>)}

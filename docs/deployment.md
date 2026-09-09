@@ -10,8 +10,9 @@
 
 - Pages 项目 `zhiyu-learning`，production branch 为 `main`。
 - 正式 D1 数据库。使用独立数据库，不导入 `.wrangler/` 中的本机账号或演示课程。
-- 私有 R2 桶，默认名称 `zhiyu-course-images`。不要启用公共访问。若账号尚未开通 R2，应先由账号持有人检查所需服务与费用；工作流不会自动开通或购买服务。
-- 仅限定该 Cloudflare 账号的专用 API Token，允许 Cloudflare Pages Edit、D1 Edit，以及用于检查桶的 Workers R2 Storage Read。后续图片读写由 Pages 绑定完成。不要使用 Global API Key，也不要复制本机 OAuth 会话到 GitHub。
+- 仅限定该 Cloudflare 账号的专用 API Token，允许 Cloudflare Pages Edit、D1 Edit。不要使用 Global API Key，也不要复制本机 OAuth 会话到 GitHub。
+
+默认不使用 R2，不需要开通服务或创建桶。图文通过已有图片的 HTTPS 地址或本站 `/images/` 路径编辑，百度网盘仍只用于选填影片链接。后台根据服务端能力隐藏设备上传按钮。
 
 在仓库 Settings → Secrets and variables → Actions 配置：
 
@@ -20,12 +21,14 @@
 | Secret | `CLOUDFLARE_API_TOKEN` | 专用部署 API Token |
 | Variable | `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 账号 ID |
 | Variable | `CLOUDFLARE_D1_DATABASE_ID` | 正式数据库 UUID |
-| Variable，可选 | `CLOUDFLARE_R2_BUCKET` | 私有桶名，默认 `zhiyu-course-images` |
+| Variable，可选 | `CLOUDFLARE_R2_BUCKET` | 留空时不使用 R2；仅在主动启用图片上传后填写已有私有桶名 |
 | Variable，可选 | `AUTH_MODE` | 默认 `disabled`；真实微信登录准备就绪后设置为 `wechat` |
 | Variable，微信模式必填 | `WECHAT_APP_ID` | 有参数二维码接口权限的公众号 AppID |
 | Variable，微信模式必填 | `WECHAT_SERVER_URL` | `https://正式域名/api/auth/wechat/events` |
 
 如使用 GitHub `production` Environment，也可在该环境中配置对应值。令牌只存入 Secret，不要贴进源码、工作流正文、Issue 或聊天。
+
+以后若要启用设备上传，需要自行准备私有 R2 桶、填写上述可选变量，并给部署令牌增加用于检查桶的 Workers R2 Storage Read 权限。不要启用桶的公共访问。工作流不会自动开通 R2 或创建桶，本机的模拟桶配置也不会传到生产环境。
 
 微信模式还需在 **Cloudflare Pages 项目的 production 环境**单独配置三个加密 Secret：`WECHAT_APP_SECRET`、`WECHAT_WEBHOOK_TOKEN`、`WECHAT_ENCODING_AES_KEY`。它们不进入 GitHub Variables、生成的 `wrangler.jsonc`、前端 `VITE_*` 或构建产物。准备具备参数二维码权限的认证服务号和正式 HTTPS 服务器地址，在公众号消息与事件推送中选安全模式 XML；完整步骤及管理员初始化见 [微信公众号登录](wechat-login.md)。用户目前公众号尚不满足该接口条件且没有正式域名，因此代码接入完成不代表微信扫码已经上线。
 
@@ -34,7 +37,7 @@
 ## 发布时会执行什么
 
 1. 检查 main 分支和配置是否齐全，构建并运行部署配置、后端及界面测试。
-2. 核验目标 Pages 项目、生产分支、D1 与 R2 资源。若发现正在替换既有生产数据库/图片桶，或登录配置不兼容，则停止；微信模式还检查生产加密 Secret 和已有 AppID，拒绝悄然更换公众号身份范围。
+2. 核验目标 Pages 项目、生产分支和 D1；仅填写桶名时检查 R2。若发现正在替换既有生产数据库、替换或移除图片桶，或登录配置不兼容，则停止；微信模式还检查生产加密 Secret 和已有 AppID，拒绝悄然更换公众号身份范围。
 3. 在 GitHub 临时工作目录生成真实资源配置，应用远端 D1 迁移。
 4. 勾选 `seed_public_demo` 时，只用 `INSERT OR IGNORE` 补充缺少的公开首页、课程和案例；已有内容保持原样。不会上传本机学员、密钥、会话、小节正文或图片。
 5. 用锁文件指定的 Wrangler 发布静态资源和 Functions，随后检查生产健康接口、公开首页数据以及匿名访问后台被拒绝。微信模式还在配置的正式域名检查身份模式；这些探测不替代真实二维码生成、公众号回调和手机扫码验收。

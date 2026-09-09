@@ -23,9 +23,12 @@ export async function checkCurriculum(t, call, base, admin, learner, stranger) {
     assert.equal((await call(editor)).status, 401)
     assert.equal((await call(editor, learnerOptions)).status, 403)
     assert.equal((await call(reader, adminOptions)).status, 403)
-    assert.equal((await call(editor, adminOptions)).data.item.revision, 0)
+    const initial = await call(editor, adminOptions)
+    assert.equal(initial.data.item.revision, 0)
+    assert.equal(initial.data.imageUploadEnabled, true)
     const draft = await save({ chapters: [{ id: 'new-chapter', title: '', lessons: [] }] })
     assert.equal(draft.status, 200); revision = draft.data.item.revision
+    assert.equal(draft.data.imageUploadEnabled, true)
     assert.equal((await call(outline)).data.chapters.length, 0)
     assert.equal((await call(reader)).status, 401)
     assert.equal((await call(reader, learnerOptions)).status, 403)
