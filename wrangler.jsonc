@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zhiyu-learning",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-09",
+  "vars": {
+    // Fail closed on deployment. The local runner overrides this on loopback only.
+    "AUTH_MODE": "disabled"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zhiyu-learning-local",
+      // Placeholder for local emulation. Create/bind the real database before deploying.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
+}

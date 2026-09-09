@@ -1,0 +1,83 @@
+/* Server-backed forms reuse the established walnut / brass palette. */
+.bz-notice { margin: 16px 0; padding: 16px 18px; border: 1px solid var(--bz-line); border-left: 3px solid var(--bz-gold); border-radius: 10px; background: var(--bz-surface); color: var(--bz-muted); font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
+.bz-notice.is-error { border-left-color: #d97865; color: var(--bz-text); }
+.bz-notice p { margin: 0 0 8px; }
+.bz-notice button { color: inherit; }
+.bz-connection-status:empty { display: none; }
+.bz-server-form { display: grid; gap: 16px; margin: 18px 0; }
+.bz-server-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 18px; }
+.bz-server-form label { display: grid; gap: 8px; color: var(--bz-text); font-size: 13px; font-weight: 600; }
+.bz-server-form input, .bz-server-form textarea, .bz-server-form select { width: 100%; min-width: 0; min-height: 48px; padding: 12px 14px; border: 1px solid var(--bz-line); border-radius: 9px; background: var(--bz-bg); color: var(--bz-text); font: 400 16px/1.6 var(--font-body); }
+.bz-server-form textarea { resize: vertical; }
+.bz-server-form small { color: var(--bz-muted); line-height: 1.7; }
+.bz-server-form :is(input, textarea, select):focus-visible, .bz-dialog button:focus-visible { outline: 2px solid var(--bz-gold); outline-offset: 3px; }
+.bz-server-form .bz-checkbox { display: flex; align-items: center; gap: 10px; font-weight: 400; }
+.bz-server-form .bz-checkbox input { width: 20px; height: 20px; min-height: 20px; flex: 0 0 20px; accent-color: var(--bz-gold); }
+.bz-server-form button:disabled, .bz-action-row button:disabled, .bz-record-list button:disabled { opacity: .55; cursor: not-allowed; }
+.bz-server-form .bz-primary, .bz-server-form .bz-secondary { justify-self: start; }
+.bz-action-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 14px 0; }
+.bz-action-row .bz-secondary { min-height: 44px; }
+.bz-login-panel { max-width: 640px; margin: 20px auto; }
+.bz-login-panel h1 { margin: 18px 0; font-family: var(--font-display); }
+.bz-login-panel > p, .bz-live-account .bz-panel > p, .bz-padded-card > p { color: var(--bz-muted); line-height: 1.9; font-size: 14px; }
+.bz-live-account { max-width: 1060px; }
+.bz-live-account .bz-panel { margin-top: 22px; }
+.bz-live-account .bz-welcome { display: block; }
+.bz-live-account .bz-welcome small { color: var(--bz-muted); overflow-wrap: anywhere; }
+.bz-owned-courses { display: grid; gap: 20px; margin-top: 20px; }
+.bz-owned-course { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 16px; padding: 20px 0; border-top: 1px solid var(--bz-line); align-items: center; }
+.bz-owned-course img { width: 70px; height: 76px; object-fit: cover; border-radius: 9px; }
+.bz-owned-course span { color: var(--bz-gold); font: 10px var(--font-mono); letter-spacing: .1em; }
+.bz-owned-course h3 { font-size: 17px; margin: 7px 0; }
+.bz-owned-course p { font-size: 12px; color: var(--bz-muted); }
+.bz-owned-course button { grid-column: 1 / -1; }
+.bz-dialog { border: 1px solid var(--bz-line); padding: 0; color: var(--bz-text); background: var(--bz-bg); border-radius: 17px; margin: auto; max-height: 90dvh; width: min(720px, calc(100% - 24px)); max-width: 720px; overflow: auto; box-shadow: 0 20px 100px #0006; }
+.bz-dialog::backdrop { background: #000a; backdrop-filter: blur(6px); }
+.bz-dialog .bz-modal { max-height: none; max-width: none; width: 100%; margin: 0; overflow: visible; border: 0; box-shadow: none; background: var(--bz-bg); color: var(--bz-text); }
+.bz-dialog .bz-modal h2 { color: var(--bz-text); }
+body:has(.bz-dialog[open]) { overflow: hidden; }
+.bz-dialog h2 { padding-right: 22px; }
+.bz-dialog .bz-modal > p { color: var(--bz-muted); }
+.bz-dialog .bz-modal-close { position: absolute; }
+.bz-dialog .bz-modal .bz-notice { color: var(--bz-muted); }
+.bz-code-text { display: block; color: var(--bz-gold); font-family: var(--font-mono); font-size: 16px; letter-spacing: .04em; overflow-wrap: anywhere; user-select: all; }
+.bz-resource-delivery { display: grid; gap: 16px; margin-top: 20px; }
+.bz-resource-delivery p { margin: 0; }
+.bz-resource-delivery label { display: grid; gap: 8px; }
+.bz-preserve-lines { white-space: pre-wrap; overflow-wrap: anywhere; }
+.bz-padded-card { padding: 22px; margin-top: 20px; }
+.bz-padded-card h2 { margin: 0 0 12px; font-size: 21px; }
+.bz-record-list article { display: grid; gap: 10px; padding: 20px 0; border-bottom: 1px solid var(--bz-line); overflow-wrap: anywhere; }
+.bz-record-list article:last-child { border-bottom: 0; }
+.bz-record-list article > div { min-width: 0; }
+.bz-record-list article strong { font-size: 15px; }
+.bz-record-list article p { color: var(--bz-muted); font-size: 13px; line-height: 1.7; margin: 7px 0; }
+.bz-record-list article small { color: var(--bz-faint); display: block; font-size: 11px; }
+.bz-record-list article > button { justify-self: start; }
+.bz-two-fields { display: grid; gap: 18px; }
+.bz-check-list { display: grid; gap: 12px; }
+.bz-editor-tabs { display: flex; gap: 8px; margin-top: 20px; }
+.bz-editor-tabs button { padding: 12px 18px; background: var(--bz-bg); color: var(--bz-muted); border: 1px solid var(--bz-line); border-radius: 8px; }
+.bz-editor-tabs button.active { color: var(--bz-gold); border-color: var(--bz-gold); }
+.bz-draft-preview { border: 1px dashed var(--bz-line); border-radius: 10px; padding: 16px; color: var(--bz-muted); }
+.bz-draft-preview summary { cursor: pointer; font-size: 13px; }
+.bz-draft-preview h3 { color: var(--bz-text); }
+.bz-cover-preview { margin: 0; }
+.bz-cover-preview img { width: 100%; max-height: 220px; object-fit: cover; border-radius: 10px; }
+.bz-cover-preview figcaption { margin-top: 8px; color: var(--bz-muted); font-size: 12px; }
+.bz-sticky-actions { position: sticky; bottom: -1px; padding: 12px 0; margin-bottom: 0; background: var(--bz-bg); border-top: 1px solid var(--bz-line); z-index: 1; }
+@media (min-width: 700px) {
+  .bz-owned-course { grid-template-columns: 86px minmax(0, 1fr) auto; }
+  .bz-owned-course img { width: 86px; height: 86px; }
+  .bz-owned-course button { grid-column: auto; }
+  .bz-two-fields { grid-template-columns: 1fr 1fr; }
+  .bz-record-list article { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .bz-record-list article .bz-action-row { justify-content: flex-end; max-width: 370px; }
+}
+@media (max-width: 420px) {
+  .bz-padded-card { padding: 16px; }
+  .bz-dialog .bz-modal { padding: 28px 20px 18px; }
+  .bz-sticky-actions > button { flex: 1 1 100%; }
+  .bz-admin-main > header > .bz-action-row { gap: 6px; margin-top: 0; }
+  .bz-admin-main > header > .bz-action-row .bz-secondary { padding-inline: 12px; font-size: 11px; }
+}

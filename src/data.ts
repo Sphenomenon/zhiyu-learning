@@ -1,15 +1,5 @@
-export type Course = {
-  id: string
-  index: string
-  label: string
-  title: string
-  subtitle: string
-  description: string
-  lessons: number
-  duration: string
-  color: string
-  level: string
-}
+import type { Course } from '../shared/types'
+export type { Course } from '../shared/types'
 
 export const courses: Course[] = [
   {

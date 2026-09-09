@@ -1,4 +1,4 @@
-name: Frontend build
+name: Build and backend tests
 
 on:
   push:
@@ -22,3 +22,4 @@ jobs:
           version: '11.22.0'
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: pnpm test
