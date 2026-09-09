@@ -48,7 +48,7 @@ pnpm test
 
 构建检查前台和服务端类型。测试包括独立临时 D1 的真实 Workers 集成检查，以及 DOM 表单交互检查；不会覆盖开发数据库。后端测试为验证验证码冷却时间，需要约半分钟。
 
-GitHub Actions 执行构建和测试，不自动发布。源码协作不代表已更新线上站点；本版本尚未部署。
+GitHub Actions 在 push 后执行构建和测试。手动发布入口为 Actions → Deploy to Cloudflare Pages，首次使用需配置云端资源及部署凭证，详见 [GitHub 部署说明](docs/deployment.md)。源码推送不代表线上部署已完成。
 
 ## 实现与边界
 

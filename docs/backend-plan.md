@@ -85,7 +85,7 @@ Node.js 用于本地开发和构建；Pages Functions 在线上运行于 Workers
 
 现有 `zhiyu-learning` 是 Direct Upload 项目。Cloudflare [官方说明](https://developers.cloudflare.com/pages/get-started/direct-upload/)指出它不能直接切换为原生 Git 集成；要用原生集成需另建项目。
 
-可以保留现有项目和地址，今后通过 GitHub Actions 构建，再由 Wrangler 上传。当前工作流只做构建与自动化测试，不部署。启用自动部署时，应在 GitHub Secrets 保存专用最小权限令牌；不把本机 Wrangler OAuth 凭证复制进仓库。
+可以保留现有项目和地址，今后通过 GitHub Actions 构建，再由 Wrangler 上传。push 工作流只做构建与自动化测试；另有手动 Deploy to Cloudflare Pages 工作流。首次运行需准备正式 D1、私有 R2 以及 GitHub Actions 配置，见 [部署说明](deployment.md)。专用最小权限令牌保存在 GitHub Secrets；不把本机 Wrangler OAuth 凭证复制进仓库。
 
 ## 需要站点运营者完成
 
